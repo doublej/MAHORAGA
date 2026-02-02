@@ -46,13 +46,6 @@
     }
   ],
 
-  "r2_buckets": [
-    {
-      "binding": "ARTIFACTS",
-      "bucket_name": "mahoraga-artifacts"
-    }
-  ],
-
   "durable_objects": {
     "bindings": [
       {
