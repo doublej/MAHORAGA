@@ -4,6 +4,7 @@
   "main": "src/index.ts",
   "compatibility_date": "2024-12-01",
   "compatibility_flags": ["nodejs_compat"],
+  "account_id": "015478e13d7ca9d81172aafcf5f199b6",
 
   "vars": {
     "ENVIRONMENT": "production",
@@ -33,7 +34,7 @@
     {
       "binding": "DB",
       "database_name": "mahoraga-db",
-      "database_id": "placeholder-will-be-replaced-after-create",
+      "database_id": "51384f0b-c1a9-4d24-8d56-b06db35b3d14",
       "migrations_dir": "migrations"
     }
   ],
@@ -41,7 +42,7 @@
   "kv_namespaces": [
     {
       "binding": "CACHE",
-      "id": "placeholder-will-be-replaced-after-create"
+      "id": "0036a4af9f9c4f5fa68e06927d11f092"
     }
   ],
 
