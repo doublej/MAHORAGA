@@ -1,4 +1,5 @@
 export interface Env {
+  ASSETS: Fetcher;
   DB: D1Database;
   CACHE: KVNamespace;
   SESSION: DurableObjectNamespace;
@@ -8,6 +9,9 @@ export interface Env {
   ALPACA_API_SECRET: string;
   ALPACA_PAPER?: string;
   OPENAI_API_KEY?: string;
+  ANTHROPIC_API_KEY?: string;
+  LLM_PROVIDER?: string;
+  LLM_MODEL?: string;
   TWITTER_BEARER_TOKEN?: string;
   DISCORD_WEBHOOK_URL?: string;
   MAHORAGA_API_TOKEN: string;

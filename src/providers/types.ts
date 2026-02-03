@@ -276,6 +276,8 @@ export interface NewsProvider {
   search(query: string, limit?: number): Promise<NewsItem[]>;
 }
 
+export type ReasoningEffort = "low" | "medium" | "high";
+
 export interface CompletionParams {
   model?: string;
   messages: Array<{
@@ -284,6 +286,7 @@ export interface CompletionParams {
   }>;
   temperature?: number;
   max_tokens?: number;
+  reasoning_effort?: ReasoningEffort;
   response_format?: { type: "json_object" } | { type: "text" };
 }
 
