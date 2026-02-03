@@ -483,7 +483,6 @@ export class MahoragaMcpAgent extends McpAgent<Env> {
 
           const estimatedCost = input.notional ?? (input.qty ?? 0) * estimatedPrice;
 
-          // Determine asset class via API lookup, with fallback to symbol pattern
           let assetClass: 'crypto' | 'us_equity' = 'us_equity';
           try {
             const asset = await alpaca.trading.getAsset(input.symbol);
@@ -491,10 +490,17 @@ export class MahoragaMcpAgent extends McpAgent<Env> {
               assetClass = 'crypto';
             }
           } catch {
-            // Fallback: crypto symbols contain "/" (e.g., BTC/USD)
             if (input.symbol.includes('/')) {
               assetClass = 'crypto';
             }
+          }
+
+          let effectiveTimeInForce = input.time_in_force;
+          if (
+            assetClass === 'crypto' &&
+            (effectiveTimeInForce === 'day' || effectiveTimeInForce === 'fok')
+          ) {
+            effectiveTimeInForce = 'gtc';
           }
 
           const preview = {
@@ -506,7 +512,7 @@ export class MahoragaMcpAgent extends McpAgent<Env> {
             order_type: input.order_type,
             limit_price: input.limit_price,
             stop_price: input.stop_price,
-            time_in_force: input.time_in_force,
+            time_in_force: effectiveTimeInForce,
             estimated_price: estimatedPrice,
             estimated_cost: estimatedCost,
           };
@@ -624,7 +630,8 @@ export class MahoragaMcpAgent extends McpAgent<Env> {
 
           const orderParams = validation.order_params!;
           const clock = await alpaca.trading.getClock();
-          if (!clock.is_open && orderParams.time_in_force === 'day') {
+          const isCrypto = orderParams.asset_class === 'crypto';
+          if (!isCrypto && !clock.is_open && orderParams.time_in_force === 'day') {
             return {
               content: [
                 {
@@ -2893,7 +2900,8 @@ export class MahoragaMcpAgent extends McpAgent<Env> {
 
           const orderParams = validation.order_params!;
           const clock = await alpaca.trading.getClock();
-          if (!clock.is_open && orderParams.time_in_force === 'day') {
+          const isCrypto = orderParams.asset_class === 'crypto';
+          if (!isCrypto && !clock.is_open && orderParams.time_in_force === 'day') {
             return {
               content: [
                 {
