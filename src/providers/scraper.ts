@@ -1,10 +1,10 @@
-import { createError, ErrorCode } from "../lib/errors";
+import { createError, ErrorCode } from '../lib/errors';
 
 const ALLOWED_DOMAINS = [
-  "finance.yahoo.com",
-  "www.sec.gov",
-  "stockanalysis.com",
-  "companiesmarketcap.com",
+  'finance.yahoo.com',
+  'www.sec.gov',
+  'stockanalysis.com',
+  'companiesmarketcap.com',
 ];
 
 const MAX_CONTENT_SIZE = 500_000;
@@ -22,9 +22,7 @@ export interface ScrapeResult {
 export function isAllowedDomain(url: string): boolean {
   try {
     const parsed = new URL(url);
-    return ALLOWED_DOMAINS.some(
-      (d) => parsed.hostname === d || parsed.hostname.endsWith(`.${d}`)
-    );
+    return ALLOWED_DOMAINS.some(d => parsed.hostname === d || parsed.hostname.endsWith(`.${d}`));
   } catch {
     return false;
   }
@@ -34,7 +32,7 @@ export async function scrapeUrl(url: string): Promise<ScrapeResult> {
   if (!isAllowedDomain(url)) {
     throw createError(
       ErrorCode.FORBIDDEN,
-      `Domain not allowed. Allowed domains: ${ALLOWED_DOMAINS.join(", ")}`
+      `Domain not allowed. Allowed domains: ${ALLOWED_DOMAINS.join(', ')}`
     );
   }
 
@@ -45,22 +43,19 @@ export async function scrapeUrl(url: string): Promise<ScrapeResult> {
     const response = await fetch(url, {
       signal: controller.signal,
       headers: {
-        "User-Agent": "Mozilla/5.0 (compatible; Mahoraga/1.0; +https://example.com/bot)",
-        Accept: "text/html,application/xhtml+xml",
+        'User-Agent': 'Mozilla/5.0 (compatible; Mahoraga/1.0; +https://example.com/bot)',
+        Accept: 'text/html,application/xhtml+xml',
       },
     });
 
     clearTimeout(timeoutId);
 
     if (!response.ok) {
-      throw createError(
-        ErrorCode.PROVIDER_ERROR,
-        `Failed to fetch ${url}: ${response.status}`
-      );
+      throw createError(ErrorCode.PROVIDER_ERROR, `Failed to fetch ${url}: ${response.status}`);
     }
 
-    const contentType = response.headers.get("content-type") || "";
-    if (!contentType.includes("text/html") && !contentType.includes("text/plain")) {
+    const contentType = response.headers.get('content-type') || '';
+    if (!contentType.includes('text/html') && !contentType.includes('text/plain')) {
       throw createError(
         ErrorCode.INVALID_INPUT,
         `Invalid content type: ${contentType}. Only HTML/text allowed.`
@@ -90,7 +85,7 @@ export async function scrapeUrl(url: string): Promise<ScrapeResult> {
   } catch (error) {
     clearTimeout(timeoutId);
 
-    if (error instanceof Error && error.name === "AbortError") {
+    if (error instanceof Error && error.name === 'AbortError') {
       throw createError(ErrorCode.PROVIDER_ERROR, `Request timed out after ${TIMEOUT_MS}ms`);
     }
 
@@ -100,22 +95,22 @@ export async function scrapeUrl(url: string): Promise<ScrapeResult> {
 
 function extractTitle(html: string): string {
   const match = html.match(/<title[^>]*>([^<]+)<\/title>/i);
-  return match ? decodeHtmlEntities(match[1] ?? "").trim() : "";
+  return match ? decodeHtmlEntities(match[1] ?? '').trim() : '';
 }
 
 function extractText(html: string): string {
   let text = html;
 
-  text = text.replace(/<script[^>]*>[\s\S]*?<\/script>/gi, " ");
-  text = text.replace(/<style[^>]*>[\s\S]*?<\/style>/gi, " ");
-  text = text.replace(/<nav[^>]*>[\s\S]*?<\/nav>/gi, " ");
-  text = text.replace(/<header[^>]*>[\s\S]*?<\/header>/gi, " ");
-  text = text.replace(/<footer[^>]*>[\s\S]*?<\/footer>/gi, " ");
-  text = text.replace(/<!--[\s\S]*?-->/g, " ");
+  text = text.replace(/<script[^>]*>[\s\S]*?<\/script>/gi, ' ');
+  text = text.replace(/<style[^>]*>[\s\S]*?<\/style>/gi, ' ');
+  text = text.replace(/<nav[^>]*>[\s\S]*?<\/nav>/gi, ' ');
+  text = text.replace(/<header[^>]*>[\s\S]*?<\/header>/gi, ' ');
+  text = text.replace(/<footer[^>]*>[\s\S]*?<\/footer>/gi, ' ');
+  text = text.replace(/<!--[\s\S]*?-->/g, ' ');
 
-  text = text.replace(/<[^>]+>/g, " ");
+  text = text.replace(/<[^>]+>/g, ' ');
   text = decodeHtmlEntities(text);
-  text = text.replace(/\s+/g, " ");
+  text = text.replace(/\s+/g, ' ');
   text = text.trim();
 
   return text;
@@ -123,19 +118,19 @@ function extractText(html: string): string {
 
 function decodeHtmlEntities(text: string): string {
   const entities: Record<string, string> = {
-    "&amp;": "&",
-    "&lt;": "<",
-    "&gt;": ">",
-    "&quot;": '"',
-    "&#39;": "'",
-    "&apos;": "'",
-    "&nbsp;": " ",
-    "&mdash;": "—",
-    "&ndash;": "–",
-    "&hellip;": "…",
-    "&copy;": "©",
-    "&reg;": "®",
-    "&trade;": "™",
+    '&amp;': '&',
+    '&lt;': '<',
+    '&gt;': '>',
+    '&quot;': '"',
+    '&#39;': "'",
+    '&apos;': "'",
+    '&nbsp;': ' ',
+    '&mdash;': '—',
+    '&ndash;': '–',
+    '&hellip;': '…',
+    '&copy;': '©',
+    '&reg;': '®',
+    '&trade;': '™',
   };
 
   let result = text;
@@ -143,9 +138,7 @@ function decodeHtmlEntities(text: string): string {
     result = result.split(entity).join(char);
   }
 
-  result = result.replace(/&#(\d+);/g, (_, code) =>
-    String.fromCharCode(parseInt(code, 10))
-  );
+  result = result.replace(/&#(\d+);/g, (_, code) => String.fromCharCode(parseInt(code, 10)));
 
   result = result.replace(/&#x([0-9a-f]+);/gi, (_, code) =>
     String.fromCharCode(parseInt(code, 16))
@@ -154,13 +147,16 @@ function decodeHtmlEntities(text: string): string {
   return result;
 }
 
-export function extractFinancialData(text: string, symbol: string): {
+export function extractFinancialData(
+  text: string,
+  symbol: string
+): {
   mentions: number;
   priceReferences: string[];
   percentChanges: string[];
   keyPhrases: string[];
 } {
-  const symbolRegex = new RegExp(`\\b${symbol}\\b`, "gi");
+  const symbolRegex = new RegExp(`\\b${symbol}\\b`, 'gi');
   const mentions = (text.match(symbolRegex) || []).length;
 
   const priceRegex = /\$[\d,]+\.?\d*/g;

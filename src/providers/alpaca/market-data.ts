@@ -1,5 +1,5 @@
-import type { AlpacaClient } from "./client";
-import type { Bar, Quote, Snapshot, BarsParams, MarketDataProvider } from "../types";
+import type { AlpacaClient } from './client';
+import type { Bar, Quote, Snapshot, BarsParams, MarketDataProvider } from '../types';
 
 interface AlpacaBarsResponse {
   bars: Record<string, AlpacaBar[]>;
@@ -91,13 +91,9 @@ function parseSnapshot(symbol: string, raw: AlpacaSnapshot): Snapshot {
 export class AlpacaMarketDataProvider implements MarketDataProvider {
   constructor(private client: AlpacaClient) {}
 
-  async getBars(
-    symbol: string,
-    timeframe: string,
-    params?: BarsParams
-  ): Promise<Bar[]> {
+  async getBars(symbol: string, timeframe: string, params?: BarsParams): Promise<Bar[]> {
     const response = await this.client.dataRequest<AlpacaBarsResponse | { bars: AlpacaBar[] }>(
-      "GET",
+      'GET',
       `/v2/stocks/${encodeURIComponent(symbol)}/bars`,
       {
         timeframe,
@@ -123,7 +119,7 @@ export class AlpacaMarketDataProvider implements MarketDataProvider {
 
   async getLatestBar(symbol: string): Promise<Bar> {
     const response = await this.client.dataRequest<AlpacaLatestBarsResponse>(
-      "GET",
+      'GET',
       `/v2/stocks/${encodeURIComponent(symbol)}/bars/latest`
     );
 
@@ -136,9 +132,9 @@ export class AlpacaMarketDataProvider implements MarketDataProvider {
 
   async getLatestBars(symbols: string[]): Promise<Record<string, Bar>> {
     const response = await this.client.dataRequest<AlpacaLatestBarsResponse>(
-      "GET",
-      "/v2/stocks/bars/latest",
-      { symbols: symbols.join(",") }
+      'GET',
+      '/v2/stocks/bars/latest',
+      { symbols: symbols.join(',') }
     );
 
     const result: Record<string, Bar> = {};
@@ -150,7 +146,7 @@ export class AlpacaMarketDataProvider implements MarketDataProvider {
 
   async getQuote(symbol: string): Promise<Quote> {
     const response = await this.client.dataRequest<AlpacaQuotesResponse>(
-      "GET",
+      'GET',
       `/v2/stocks/${encodeURIComponent(symbol)}/quotes/latest`
     );
 
@@ -163,9 +159,9 @@ export class AlpacaMarketDataProvider implements MarketDataProvider {
 
   async getQuotes(symbols: string[]): Promise<Record<string, Quote>> {
     const response = await this.client.dataRequest<AlpacaQuotesResponse>(
-      "GET",
-      "/v2/stocks/quotes/latest",
-      { symbols: symbols.join(",") }
+      'GET',
+      '/v2/stocks/quotes/latest',
+      { symbols: symbols.join(',') }
     );
 
     const result: Record<string, Quote> = {};
@@ -177,7 +173,7 @@ export class AlpacaMarketDataProvider implements MarketDataProvider {
 
   async getSnapshot(symbol: string): Promise<Snapshot> {
     const response = await this.client.dataRequest<AlpacaSnapshotsResponse | AlpacaSnapshot>(
-      "GET",
+      'GET',
       `/v2/stocks/${encodeURIComponent(symbol)}/snapshot`
     );
 
@@ -198,8 +194,8 @@ export class AlpacaMarketDataProvider implements MarketDataProvider {
 
   async getCryptoSnapshot(symbol: string): Promise<Snapshot> {
     const response = await this.client.dataRequest<{ snapshots: AlpacaSnapshotsResponse }>(
-      "GET",
-      "/v1beta3/crypto/us/snapshots",
+      'GET',
+      '/v1beta3/crypto/us/snapshots',
       { symbols: symbol }
     );
 
@@ -212,9 +208,9 @@ export class AlpacaMarketDataProvider implements MarketDataProvider {
 
   async getSnapshots(symbols: string[]): Promise<Record<string, Snapshot>> {
     const response = await this.client.dataRequest<AlpacaSnapshotsResponse>(
-      "GET",
-      "/v2/stocks/snapshots",
-      { symbols: symbols.join(",") }
+      'GET',
+      '/v2/stocks/snapshots',
+      { symbols: symbols.join(',') }
     );
 
     const result: Record<string, Snapshot> = {};
@@ -225,8 +221,6 @@ export class AlpacaMarketDataProvider implements MarketDataProvider {
   }
 }
 
-export function createAlpacaMarketDataProvider(
-  client: AlpacaClient
-): AlpacaMarketDataProvider {
+export function createAlpacaMarketDataProvider(client: AlpacaClient): AlpacaMarketDataProvider {
   return new AlpacaMarketDataProvider(client);
 }

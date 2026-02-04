@@ -1,5 +1,5 @@
-import { D1Client, StructuredEventRow } from "../client";
-import { generateId, nowISO } from "../../../lib/utils";
+import { D1Client, StructuredEventRow } from '../client';
+import { generateId, nowISO } from '../../../lib/utils';
 
 export interface RawEventRow {
   id: string;
@@ -24,27 +24,14 @@ export async function insertRawEvent(
   await db.run(
     `INSERT OR IGNORE INTO raw_events (id, source, source_id, raw_content, r2_key, ingested_at)
      VALUES (?, ?, ?, ?, ?, ?)`,
-    [
-      id,
-      params.source,
-      params.source_id,
-      params.raw_content,
-      params.r2_key ?? null,
-      nowISO(),
-    ]
+    [id, params.source, params.source_id, params.raw_content, params.r2_key ?? null, nowISO()]
   );
 
   return id;
 }
 
-export async function getRawEvent(
-  db: D1Client,
-  id: string
-): Promise<RawEventRow | null> {
-  return db.executeOne<RawEventRow>(
-    `SELECT * FROM raw_events WHERE id = ?`,
-    [id]
-  );
+export async function getRawEvent(db: D1Client, id: string): Promise<RawEventRow | null> {
+  return db.executeOne<RawEventRow>(`SELECT * FROM raw_events WHERE id = ?`, [id]);
 }
 
 export async function rawEventExists(
@@ -72,10 +59,9 @@ export async function getRecentRawEvents(
     );
   }
 
-  return db.execute<RawEventRow>(
-    `SELECT * FROM raw_events ORDER BY ingested_at DESC LIMIT ?`,
-    [limit]
-  );
+  return db.execute<RawEventRow>(`SELECT * FROM raw_events ORDER BY ingested_at DESC LIMIT ?`, [
+    limit,
+  ]);
 }
 
 export async function insertStructuredEvent(
@@ -99,7 +85,7 @@ export async function insertStructuredEvent(
       id,
       params.raw_event_id ?? null,
       params.event_type,
-      params.symbols.join(","),
+      params.symbols.join(','),
       params.summary,
       params.confidence,
       params.validated ? 1 : 0,
@@ -115,10 +101,7 @@ export async function getStructuredEvent(
   db: D1Client,
   id: string
 ): Promise<StructuredEventRow | null> {
-  return db.executeOne<StructuredEventRow>(
-    `SELECT * FROM structured_events WHERE id = ?`,
-    [id]
-  );
+  return db.executeOne<StructuredEventRow>(`SELECT * FROM structured_events WHERE id = ?`, [id]);
 }
 
 export async function queryStructuredEvents(
@@ -136,19 +119,19 @@ export async function queryStructuredEvents(
   const values: unknown[] = [];
 
   if (event_type) {
-    conditions.push("event_type = ?");
+    conditions.push('event_type = ?');
     values.push(event_type);
   }
   if (symbol) {
-    conditions.push("symbols LIKE ?");
+    conditions.push('symbols LIKE ?');
     values.push(`%${symbol.toUpperCase()}%`);
   }
   if (validated !== undefined) {
-    conditions.push("validated = ?");
+    conditions.push('validated = ?');
     values.push(validated ? 1 : 0);
   }
 
-  const whereClause = conditions.length > 0 ? `WHERE ${conditions.join(" AND ")}` : "";
+  const whereClause = conditions.length > 0 ? `WHERE ${conditions.join(' AND ')}` : '';
   values.push(limit, offset);
 
   return db.execute<StructuredEventRow>(
@@ -163,10 +146,11 @@ export async function markEventValidated(
   validated: boolean,
   errors?: string[]
 ): Promise<void> {
-  await db.run(
-    `UPDATE structured_events SET validated = ?, validation_errors = ? WHERE id = ?`,
-    [validated ? 1 : 0, errors ? JSON.stringify(errors) : null, eventId]
-  );
+  await db.run(`UPDATE structured_events SET validated = ?, validation_errors = ? WHERE id = ?`, [
+    validated ? 1 : 0,
+    errors ? JSON.stringify(errors) : null,
+    eventId,
+  ]);
 }
 
 export async function linkEventToTrade(
@@ -174,10 +158,7 @@ export async function linkEventToTrade(
   eventId: string,
   tradeId: string
 ): Promise<void> {
-  await db.run(
-    `UPDATE structured_events SET trade_id = ? WHERE id = ?`,
-    [tradeId, eventId]
-  );
+  await db.run(`UPDATE structured_events SET trade_id = ? WHERE id = ?`, [tradeId, eventId]);
 }
 
 export interface NewsItemRow {
@@ -218,7 +199,7 @@ export async function insertNewsItem(
       params.headline,
       params.summary ?? null,
       params.url ?? null,
-      params.symbols.join(","),
+      params.symbols.join(','),
       params.r2_key ?? null,
       params.published_at ?? null,
       nowISO(),
@@ -242,15 +223,15 @@ export async function queryNewsItems(
   const values: unknown[] = [];
 
   if (symbol) {
-    conditions.push("symbols LIKE ?");
+    conditions.push('symbols LIKE ?');
     values.push(`%${symbol.toUpperCase()}%`);
   }
   if (source) {
-    conditions.push("source = ?");
+    conditions.push('source = ?');
     values.push(source);
   }
 
-  const whereClause = conditions.length > 0 ? `WHERE ${conditions.join(" AND ")}` : "";
+  const whereClause = conditions.length > 0 ? `WHERE ${conditions.join(' AND ')}` : '';
   values.push(limit, offset);
 
   return db.execute<NewsItemRow>(
@@ -271,17 +252,9 @@ export interface EventSourceRow {
 }
 
 export async function getActiveEventSources(db: D1Client): Promise<EventSourceRow[]> {
-  return db.execute<EventSourceRow>(
-    `SELECT * FROM event_sources WHERE active = 1`
-  );
+  return db.execute<EventSourceRow>(`SELECT * FROM event_sources WHERE active = 1`);
 }
 
-export async function updateEventSourcePollTime(
-  db: D1Client,
-  sourceId: string
-): Promise<void> {
-  await db.run(
-    `UPDATE event_sources SET last_poll_at = ? WHERE id = ?`,
-    [nowISO(), sourceId]
-  );
+export async function updateEventSourcePollTime(db: D1Client, sourceId: string): Promise<void> {
+  await db.run(`UPDATE event_sources SET last_poll_at = ? WHERE id = ?`, [nowISO(), sourceId]);
 }

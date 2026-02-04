@@ -24,7 +24,7 @@ MAHORAGA monitors social sentiment from StockTwits and Reddit, uses OpenAI to an
 
 ## Requirements
 
-- Node.js 18+
+- Bun 1.0+
 - Cloudflare account (free tier works)
 - Alpaca account (free, paper trading supported)
 - OpenAI API key
@@ -36,47 +36,47 @@ MAHORAGA monitors social sentiment from StockTwits and Reddit, uses OpenAI to an
 ```bash
 git clone https://github.com/ygwyg/MAHORAGA.git
 cd mahoraga
-npm install
+bun install
 ```
 
 ### 2. Create Cloudflare resources
 
 ```bash
 # Create D1 database
-npx wrangler d1 create mahoraga-db
+bunx wrangler d1 create mahoraga-db
 # Copy the database_id to wrangler.jsonc
 
 # Create KV namespace
-npx wrangler kv namespace create CACHE
+bunx wrangler kv namespace create CACHE
 # Copy the id to wrangler.jsonc
 
 # Run migrations
-npx wrangler d1 migrations apply mahoraga-db
+bunx wrangler d1 migrations apply mahoraga-db
 ```
 
 ### 3. Set secrets
 
 ```bash
 # Required
-npx wrangler secret put ALPACA_API_KEY
-npx wrangler secret put ALPACA_API_SECRET
-npx wrangler secret put OPENAI_API_KEY
+bunx wrangler secret put ALPACA_API_KEY
+bunx wrangler secret put ALPACA_API_SECRET
+bunx wrangler secret put OPENAI_API_KEY
 
 # API Authentication - generate a secure random token (64+ chars recommended)
 # Example: openssl rand -base64 48
-npx wrangler secret put MAHORAGA_API_TOKEN
+bunx wrangler secret put MAHORAGA_API_TOKEN
 
 # Optional
-npx wrangler secret put ALPACA_PAPER         # "true" for paper trading (recommended)
-npx wrangler secret put TWITTER_BEARER_TOKEN
-npx wrangler secret put DISCORD_WEBHOOK_URL
-npx wrangler secret put KILL_SWITCH_SECRET   # Emergency kill switch (separate from API token)
+bunx wrangler secret put ALPACA_PAPER         # "true" for paper trading (recommended)
+bunx wrangler secret put TWITTER_BEARER_TOKEN
+bunx wrangler secret put DISCORD_WEBHOOK_URL
+bunx wrangler secret put KILL_SWITCH_SECRET   # Emergency kill switch (separate from API token)
 ```
 
 ### 4. Deploy
 
 ```bash
-npx wrangler deploy
+bunx wrangler deploy
 ```
 
 ### 5. Enable the agent
@@ -108,17 +108,17 @@ curl -H "Authorization: Bearer $KILL_SWITCH_SECRET" \
   https://your-worker.workers.dev/agent/kill
 
 # Run dashboard locally
-cd dashboard && npm install && npm run dev
+cd dashboard && bun install && bun run dev
 ```
 
 ## Local Development
 
 ```bash
 # Terminal 1 - Start wrangler
-npx wrangler dev
+bunx wrangler dev
 
-# Terminal 2 - Start dashboard  
-cd dashboard && npm run dev
+# Terminal 2 - Start dashboard
+cd dashboard && bun run dev
 
 # Terminal 3 - Enable the agent
 curl -H "Authorization: Bearer $MAHORAGA_TOKEN" \
@@ -204,7 +204,7 @@ CLOUDFLARE_API_TOKEN=your-token \
 CLOUDFLARE_ACCOUNT_ID=your-account-id \
 MAHORAGA_WORKER_URL=https://mahoraga.your-subdomain.workers.dev \
 MAHORAGA_ALLOWED_EMAILS=you@example.com \
-npm run setup:access
+bun run setup:access
 ```
 
 This creates a Cloudflare Access Application with email verification or One-Time PIN.

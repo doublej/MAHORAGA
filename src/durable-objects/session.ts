@@ -1,5 +1,5 @@
-import { DurableObject } from "cloudflare:workers";
-import type { Env } from "../env.d";
+import { DurableObject } from 'cloudflare:workers';
+import type { Env } from '../env.d';
 
 interface SessionState {
   authenticated: boolean;
@@ -28,7 +28,7 @@ export class SessionDO extends DurableObject<Env> {
   constructor(ctx: DurableObjectState, env: Env) {
     super(ctx, env);
     this.ctx.blockConcurrencyWhile(async () => {
-      const stored = await this.ctx.storage.get<SessionState>("state");
+      const stored = await this.ctx.storage.get<SessionState>('state');
       if (stored) {
         this.state = stored;
       }
@@ -41,35 +41,35 @@ export class SessionDO extends DurableObject<Env> {
 
     try {
       switch (action) {
-        case "get":
+        case 'get':
           return this.jsonResponse(this.state);
 
-        case "authenticate":
+        case 'authenticate':
           return this.handleAuthenticate();
 
-        case "deauthenticate":
+        case 'deauthenticate':
           return this.handleDeauthenticate();
 
-        case "check-rate-limit":
+        case 'check-rate-limit':
           return this.handleCheckRateLimit();
 
-        case "increment-request":
+        case 'increment-request':
           return this.handleIncrementRequest();
 
-        case "set-metadata":
+        case 'set-metadata':
           return this.handleSetMetadata(request);
 
-        case "reset":
+        case 'reset':
           return this.handleReset();
 
         default:
-          return new Response("Not found", { status: 404 });
+          return new Response('Not found', { status: 404 });
       }
     } catch (error) {
-      return new Response(
-        JSON.stringify({ error: String(error) }),
-        { status: 500, headers: { "Content-Type": "application/json" } }
-      );
+      return new Response(JSON.stringify({ error: String(error) }), {
+        status: 500,
+        headers: { 'Content-Type': 'application/json' },
+      });
     }
   }
 
@@ -132,7 +132,7 @@ export class SessionDO extends DurableObject<Env> {
   }
 
   private async handleSetMetadata(request: Request): Promise<Response> {
-    const body = await request.json() as Record<string, unknown>;
+    const body = (await request.json()) as Record<string, unknown>;
     this.state.metadata = { ...this.state.metadata, ...body };
     await this.persist();
     return this.jsonResponse({ ok: true, metadata: this.state.metadata });
@@ -145,36 +145,30 @@ export class SessionDO extends DurableObject<Env> {
   }
 
   private async persist(): Promise<void> {
-    await this.ctx.storage.put("state", this.state);
+    await this.ctx.storage.put('state', this.state);
   }
 
   private jsonResponse(data: unknown): Response {
     return new Response(JSON.stringify(data), {
-      headers: { "Content-Type": "application/json" },
+      headers: { 'Content-Type': 'application/json' },
     });
   }
 }
 
 export function getSessionStub(env: Env, sessionId: string): DurableObjectStub {
   const id = env.SESSION.idFromName(sessionId);
-  return env.SESSION.get(id, { locationHint: "wnam" });
+  return env.SESSION.get(id, { locationHint: 'wnam' });
 }
 
-export async function getSessionState(
-  env: Env,
-  sessionId: string
-): Promise<SessionState> {
+export async function getSessionState(env: Env, sessionId: string): Promise<SessionState> {
   const stub = getSessionStub(env, sessionId);
-  const response = await stub.fetch(new Request("http://session/get"));
+  const response = await stub.fetch(new Request('http://session/get'));
   return response.json() as Promise<SessionState>;
 }
 
-export async function authenticateSession(
-  env: Env,
-  sessionId: string
-): Promise<void> {
+export async function authenticateSession(env: Env, sessionId: string): Promise<void> {
   const stub = getSessionStub(env, sessionId);
-  await stub.fetch(new Request("http://session/authenticate"));
+  await stub.fetch(new Request('http://session/authenticate'));
 }
 
 export async function checkRateLimit(
@@ -182,14 +176,15 @@ export async function checkRateLimit(
   sessionId: string
 ): Promise<{ allowed: boolean; remaining: number; resetAt: string | null }> {
   const stub = getSessionStub(env, sessionId);
-  const response = await stub.fetch(new Request("http://session/check-rate-limit"));
-  return response.json() as Promise<{ allowed: boolean; remaining: number; resetAt: string | null }>;
+  const response = await stub.fetch(new Request('http://session/check-rate-limit'));
+  return response.json() as Promise<{
+    allowed: boolean;
+    remaining: number;
+    resetAt: string | null;
+  }>;
 }
 
-export async function incrementRequest(
-  env: Env,
-  sessionId: string
-): Promise<void> {
+export async function incrementRequest(env: Env, sessionId: string): Promise<void> {
   const stub = getSessionStub(env, sessionId);
-  await stub.fetch(new Request("http://session/increment-request"));
+  await stub.fetch(new Request('http://session/increment-request'));
 }

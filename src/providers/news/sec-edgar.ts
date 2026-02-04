@@ -1,7 +1,7 @@
-import type { NewsProvider, RawEvent, NewsItem } from "../types";
-import { generateId } from "../../lib/utils";
+import type { NewsProvider, RawEvent, NewsItem } from '../types';
+import { generateId } from '../../lib/utils';
 
-const SEC_BASE_URL = "https://www.sec.gov";
+const SEC_BASE_URL = 'https://www.sec.gov';
 
 interface SECCompanyFiling {
   cik: string;
@@ -20,7 +20,7 @@ interface SECCompanyFiling {
   };
 }
 
-const RELEVANT_FORMS = ["8-K", "4", "13F-HR", "10-K", "10-Q", "SC 13D", "SC 13G"];
+const RELEVANT_FORMS = ['8-K', '4', '13F-HR', '10-K', '10-Q', 'SC 13D', 'SC 13G'];
 
 export class SECEdgarProvider implements NewsProvider {
   private symbolToCik: Map<string, string> = new Map();
@@ -30,11 +30,11 @@ export class SECEdgarProvider implements NewsProvider {
 
     try {
       const response = await fetch(
-        "https://www.sec.gov/cgi-bin/browse-edgar?action=getcurrent&type=8-K&company=&dateb=&owner=include&count=40&output=atom",
+        'https://www.sec.gov/cgi-bin/browse-edgar?action=getcurrent&type=8-K&company=&dateb=&owner=include&count=40&output=atom',
         {
           headers: {
-            "User-Agent": "Mahoraga Trading Bot (contact@example.com)",
-            Accept: "application/atom+xml",
+            'User-Agent': 'Mahoraga Trading Bot (contact@example.com)',
+            Accept: 'application/atom+xml',
           },
         }
       );
@@ -49,7 +49,7 @@ export class SECEdgarProvider implements NewsProvider {
 
       for (const entry of entries.slice(0, 20)) {
         events.push({
-          source: "sec_edgar",
+          source: 'sec_edgar',
           source_id: entry.id,
           content: JSON.stringify(entry),
           timestamp: entry.updated,
@@ -60,7 +60,7 @@ export class SECEdgarProvider implements NewsProvider {
         });
       }
     } catch (error) {
-      console.error("SEC EDGAR poll error:", error);
+      console.error('SEC EDGAR poll error:', error);
     }
 
     return events;
@@ -80,11 +80,11 @@ export class SECEdgarProvider implements NewsProvider {
       }
 
       const response = await fetch(
-        `https://data.sec.gov/submissions/CIK${cik.padStart(10, "0")}.json`,
+        `https://data.sec.gov/submissions/CIK${cik.padStart(10, '0')}.json`,
         {
           headers: {
-            "User-Agent": "Mahoraga Trading Bot (contact@example.com)",
-            Accept: "application/json",
+            'User-Agent': 'Mahoraga Trading Bot (contact@example.com)',
+            Accept: 'application/json',
           },
         }
       );
@@ -102,7 +102,7 @@ export class SECEdgarProvider implements NewsProvider {
 
         items.push({
           id: generateId(),
-          source: "sec_edgar",
+          source: 'sec_edgar',
           headline: `${data.name} filed ${form}`,
           summary: `SEC filing: ${form} for ${data.name}`,
           url: `${SEC_BASE_URL}/cgi-bin/browse-edgar?action=getcompany&CIK=${cik}&type=${form}`,
@@ -111,7 +111,7 @@ export class SECEdgarProvider implements NewsProvider {
         });
       }
     } catch (error) {
-      console.error("SEC EDGAR getLatest error:", error);
+      console.error('SEC EDGAR getLatest error:', error);
     }
 
     return items;
@@ -143,15 +143,15 @@ export class SECEdgarProvider implements NewsProvider {
       const entryXml = match[1];
       if (!entryXml) continue;
 
-      const id = this.extractTag(entryXml, "id") || generateId();
-      const title = this.extractTag(entryXml, "title") || "";
-      const updated = this.extractTag(entryXml, "updated") || new Date().toISOString();
+      const id = this.extractTag(entryXml, 'id') || generateId();
+      const title = this.extractTag(entryXml, 'title') || '';
+      const updated = this.extractTag(entryXml, 'updated') || new Date().toISOString();
 
       const formMatch = title.match(/\((\d+-\w+|\w+)\)/);
-      const form = formMatch ? formMatch[1] ?? "" : "";
+      const form = formMatch ? (formMatch[1] ?? '') : '';
 
       const companyMatch = title.match(/^([^(]+)/);
-      const company = companyMatch ? companyMatch[1]?.trim() ?? "" : "";
+      const company = companyMatch ? (companyMatch[1]?.trim() ?? '') : '';
 
       entries.push({ id, title, updated, form, company });
     }
@@ -162,7 +162,7 @@ export class SECEdgarProvider implements NewsProvider {
   private extractTag(xml: string, tag: string): string | null {
     const regex = new RegExp(`<${tag}[^>]*>([^<]*)</${tag}>`);
     const match = xml.match(regex);
-    return match ? match[1] ?? null : null;
+    return match ? (match[1] ?? null) : null;
   }
 
   private async getCik(symbol: string): Promise<string | null> {
@@ -171,14 +171,11 @@ export class SECEdgarProvider implements NewsProvider {
     }
 
     try {
-      const response = await fetch(
-        "https://www.sec.gov/files/company_tickers.json",
-        {
-          headers: {
-            "User-Agent": "Mahoraga Trading Bot (contact@example.com)",
-          },
-        }
-      );
+      const response = await fetch('https://www.sec.gov/files/company_tickers.json', {
+        headers: {
+          'User-Agent': 'Mahoraga Trading Bot (contact@example.com)',
+        },
+      });
 
       if (!response.ok) {
         return null;

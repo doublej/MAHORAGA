@@ -13,9 +13,12 @@
     "db:studio": "wrangler d1 execute mahoraga-db --local --command 'SELECT 1'",
     "typecheck": "tsc --noEmit",
     "lint": "eslint src/",
+    "lint:fix": "eslint src/ --fix",
+    "format": "prettier --write src/",
+    "format:check": "prettier --check src/",
     "test": "vitest",
     "test:run": "vitest run",
-    "setup:access": "npx tsx scripts/setup-access.ts"
+    "setup:access": "bunx tsx scripts/setup-access.ts"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.32.1",
@@ -27,7 +30,13 @@
   "devDependencies": {
     "@cloudflare/workers-types": "^4.20241218.0",
     "@types/node": "^22.10.2",
+    "@typescript-eslint/eslint-plugin": "^8.54.0",
+    "@typescript-eslint/parser": "^8.54.0",
+    "eslint": "^9.39.2",
+    "eslint-config-prettier": "^10.1.8",
+    "prettier": "^3.8.1",
     "typescript": "^5.7.2",
+    "typescript-eslint": "^8.54.0",
     "vitest": "^2.1.8",
     "wrangler": "^4.61.1"
   },

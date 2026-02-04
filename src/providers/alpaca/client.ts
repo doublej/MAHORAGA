@@ -1,4 +1,4 @@
-import { createError, ErrorCode } from "../../lib/errors";
+import { createError, ErrorCode } from '../../lib/errors';
 
 export interface AlpacaClientConfig {
   apiKey: string;
@@ -13,21 +13,17 @@ export class AlpacaClient {
 
   constructor(config: AlpacaClientConfig) {
     this.tradingBaseUrl = config.paper
-      ? "https://paper-api.alpaca.markets"
-      : "https://api.alpaca.markets";
-    this.dataBaseUrl = "https://data.alpaca.markets";
+      ? 'https://paper-api.alpaca.markets'
+      : 'https://api.alpaca.markets';
+    this.dataBaseUrl = 'https://data.alpaca.markets';
     this.headers = {
-      "APCA-API-KEY-ID": config.apiKey,
-      "APCA-API-SECRET-KEY": config.apiSecret,
-      "Content-Type": "application/json",
+      'APCA-API-KEY-ID': config.apiKey,
+      'APCA-API-SECRET-KEY': config.apiSecret,
+      'Content-Type': 'application/json',
     };
   }
 
-  async tradingRequest<T>(
-    method: string,
-    path: string,
-    body?: unknown
-  ): Promise<T> {
+  async tradingRequest<T>(method: string, path: string, body?: unknown): Promise<T> {
     const url = `${this.tradingBaseUrl}${path}`;
     return this.request<T>(method, url, body);
   }
@@ -55,11 +51,7 @@ export class AlpacaClient {
     return this.request<T>(method, url);
   }
 
-  private async request<T>(
-    method: string,
-    url: string,
-    body?: unknown
-  ): Promise<T> {
+  private async request<T>(method: string, url: string, body?: unknown): Promise<T> {
     const options: RequestInit = {
       method,
       headers: this.headers,

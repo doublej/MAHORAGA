@@ -29,6 +29,7 @@ export interface Env {
   DEFAULT_APPROVAL_TTL_SECONDS: string;
 }
 
-declare module "cloudflare:workers" {
+declare module 'cloudflare:workers' {
+  // eslint-disable-next-line @typescript-eslint/no-empty-object-type
   interface Env extends Env {}
 }

@@ -31,7 +31,7 @@ export interface Position {
   asset_class: string;
   avg_entry_price: number;
   qty: number;
-  side: "long" | "short";
+  side: 'long' | 'short';
   market_value: number;
   cost_basis: number;
   unrealized_pl: number;
@@ -55,7 +55,7 @@ export interface Order {
   order_class: string;
   order_type: string;
   type: string;
-  side: "buy" | "sell";
+  side: 'buy' | 'sell';
   time_in_force: string;
   limit_price: string | null;
   stop_price: string | null;
@@ -71,29 +71,29 @@ export interface Order {
 }
 
 export type OrderStatus =
-  | "new"
-  | "partially_filled"
-  | "filled"
-  | "done_for_day"
-  | "canceled"
-  | "expired"
-  | "replaced"
-  | "pending_cancel"
-  | "pending_replace"
-  | "pending_new"
-  | "accepted"
-  | "stopped"
-  | "rejected"
-  | "suspended"
-  | "calculated";
+  | 'new'
+  | 'partially_filled'
+  | 'filled'
+  | 'done_for_day'
+  | 'canceled'
+  | 'expired'
+  | 'replaced'
+  | 'pending_cancel'
+  | 'pending_replace'
+  | 'pending_new'
+  | 'accepted'
+  | 'stopped'
+  | 'rejected'
+  | 'suspended'
+  | 'calculated';
 
 export interface OrderParams {
   symbol: string;
   qty?: number;
   notional?: number;
-  side: "buy" | "sell";
-  type: "market" | "limit" | "stop" | "stop_limit" | "trailing_stop";
-  time_in_force: "day" | "gtc" | "opg" | "cls" | "ioc" | "fok";
+  side: 'buy' | 'sell';
+  type: 'market' | 'limit' | 'stop' | 'stop_limit' | 'trailing_stop';
+  time_in_force: 'day' | 'gtc' | 'opg' | 'cls' | 'ioc' | 'fok';
   limit_price?: number;
   stop_price?: number;
   trail_price?: number;
@@ -103,11 +103,11 @@ export interface OrderParams {
 }
 
 export interface ListOrdersParams {
-  status?: "open" | "closed" | "all";
+  status?: 'open' | 'closed' | 'all';
   limit?: number;
   after?: string;
   until?: string;
-  direction?: "asc" | "desc";
+  direction?: 'asc' | 'desc';
   nested?: boolean;
   symbols?: string[];
 }
@@ -128,11 +128,11 @@ export interface MarketDay {
 
 export interface Asset {
   id: string;
-  class: "us_equity" | "crypto";
+  class: 'us_equity' | 'crypto';
   exchange: string;
   symbol: string;
   name: string;
-  status: "active" | "inactive";
+  status: 'active' | 'inactive';
   tradable: boolean;
   marginable: boolean;
   shortable: boolean;
@@ -176,8 +176,8 @@ export interface BarsParams {
   start?: string;
   end?: string;
   limit?: number;
-  adjustment?: "raw" | "split" | "dividend" | "all";
-  feed?: "iex" | "sip";
+  adjustment?: 'raw' | 'split' | 'dividend' | 'all';
+  feed?: 'iex' | 'sip';
 }
 
 export interface BrokerProvider {
@@ -194,7 +194,7 @@ export interface BrokerProvider {
 
   getClock(): Promise<MarketClock>;
   getCalendar(start: string, end: string): Promise<MarketDay[]>;
-  
+
   getAsset(symbol: string): Promise<Asset | null>;
 }
 
@@ -221,7 +221,7 @@ export interface OptionContract {
   underlying: string;
   expiration: string;
   strike: number;
-  type: "call" | "put";
+  type: 'call' | 'put';
   open_interest: number;
   volume: number;
 }
@@ -276,18 +276,18 @@ export interface NewsProvider {
   search(query: string, limit?: number): Promise<NewsItem[]>;
 }
 
-export type ReasoningEffort = "minimal" | "low" | "medium" | "high";
+export type ReasoningEffort = 'none' | 'minimal' | 'low' | 'medium' | 'high' | 'xhigh';
 
 export interface CompletionParams {
   model?: string;
   messages: Array<{
-    role: "system" | "user" | "assistant";
+    role: 'system' | 'user' | 'assistant';
     content: string;
   }>;
   temperature?: number;
   max_tokens?: number;
   reasoning_effort?: ReasoningEffort;
-  response_format?: { type: "json_object" } | { type: "text" };
+  response_format?: { type: 'json_object' } | { type: 'text' };
 }
 
 export interface CompletionResult {

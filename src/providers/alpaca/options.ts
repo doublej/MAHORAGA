@@ -1,5 +1,5 @@
-import type { AlpacaClient } from "./client";
-import type { OptionsProvider, OptionsChain, OptionContract, OptionSnapshot } from "../types";
+import type { AlpacaClient } from './client';
+import type { OptionsProvider, OptionsChain, OptionContract, OptionSnapshot } from '../types';
 
 // ============================================================================
 // Alpaca Options API Types
@@ -15,8 +15,8 @@ interface AlpacaOptionContract {
   root_symbol: string;
   underlying_symbol: string;
   underlying_asset_id: string;
-  type: "call" | "put";
-  style: "american" | "european";
+  type: 'call' | 'put';
+  style: 'american' | 'european';
   strike_price: string;
   size: string;
   open_interest: string;
@@ -72,13 +72,13 @@ interface AlpacaOptionSnapshotsResponse {
 
 export interface OptionsContractsParams {
   underlying_symbols?: string[];
-  status?: "active" | "inactive";
+  status?: 'active' | 'inactive';
   expiration_date?: string;
   expiration_date_gte?: string;
   expiration_date_lte?: string;
   root_symbol?: string;
-  type?: "call" | "put";
-  style?: "american" | "european";
+  type?: 'call' | 'put';
+  style?: 'american' | 'european';
   strike_price_gte?: number;
   strike_price_lte?: number;
   limit?: number;
@@ -134,7 +134,7 @@ export function filterExpirationsByDTE(
   minDTE: number,
   maxDTE: number
 ): string[] {
-  return expirations.filter((exp) => {
+  return expirations.filter(exp => {
     const dte = getDTE(exp);
     return dte >= minDTE && dte <= maxDTE;
   });
@@ -157,7 +157,7 @@ export class AlpacaOptionsProvider implements OptionsProvider {
   async getExpirations(underlying: string): Promise<string[]> {
     const contracts = await this.getContracts({
       underlying_symbols: [underlying.toUpperCase()],
-      status: "active",
+      status: 'active',
       limit: 1000,
     });
 
@@ -178,7 +178,7 @@ export class AlpacaOptionsProvider implements OptionsProvider {
     const contracts = await this.getContracts({
       underlying_symbols: [underlying.toUpperCase()],
       expiration_date: expiration,
-      status: "active",
+      status: 'active',
       limit: 500,
     });
 
@@ -186,7 +186,7 @@ export class AlpacaOptionsProvider implements OptionsProvider {
     const puts: OptionContract[] = [];
 
     for (const contract of contracts) {
-      if (contract.type === "call") {
+      if (contract.type === 'call') {
         calls.push(contract);
       } else {
         puts.push(contract);
@@ -211,7 +211,7 @@ export class AlpacaOptionsProvider implements OptionsProvider {
   async getSnapshot(contractSymbol: string): Promise<OptionSnapshot> {
     const snapshots = await this.getSnapshots([contractSymbol]);
     const snapshot = snapshots[contractSymbol];
-    
+
     if (!snapshot) {
       // Return empty snapshot if not found
       return {
@@ -224,7 +224,7 @@ export class AlpacaOptionsProvider implements OptionsProvider {
         },
       };
     }
-    
+
     return snapshot;
   }
 
@@ -236,9 +236,9 @@ export class AlpacaOptionsProvider implements OptionsProvider {
       return {};
     }
 
-    const symbols = contractSymbols.join(",");
+    const symbols = contractSymbols.join(',');
     const response = await this.client.dataRequest<AlpacaOptionSnapshotsResponse>(
-      "GET",
+      'GET',
       `/v1beta1/options/snapshots?symbols=${encodeURIComponent(symbols)}`
     );
 
@@ -257,49 +257,46 @@ export class AlpacaOptionsProvider implements OptionsProvider {
     const searchParams = new URLSearchParams();
 
     if (params.underlying_symbols?.length) {
-      searchParams.set("underlying_symbols", params.underlying_symbols.join(","));
+      searchParams.set('underlying_symbols', params.underlying_symbols.join(','));
     }
     if (params.status) {
-      searchParams.set("status", params.status);
+      searchParams.set('status', params.status);
     }
     if (params.expiration_date) {
-      searchParams.set("expiration_date", params.expiration_date);
+      searchParams.set('expiration_date', params.expiration_date);
     }
     if (params.expiration_date_gte) {
-      searchParams.set("expiration_date_gte", params.expiration_date_gte);
+      searchParams.set('expiration_date_gte', params.expiration_date_gte);
     }
     if (params.expiration_date_lte) {
-      searchParams.set("expiration_date_lte", params.expiration_date_lte);
+      searchParams.set('expiration_date_lte', params.expiration_date_lte);
     }
     if (params.root_symbol) {
-      searchParams.set("root_symbol", params.root_symbol);
+      searchParams.set('root_symbol', params.root_symbol);
     }
     if (params.type) {
-      searchParams.set("type", params.type);
+      searchParams.set('type', params.type);
     }
     if (params.style) {
-      searchParams.set("style", params.style);
+      searchParams.set('style', params.style);
     }
     if (params.strike_price_gte !== undefined) {
-      searchParams.set("strike_price_gte", String(params.strike_price_gte));
+      searchParams.set('strike_price_gte', String(params.strike_price_gte));
     }
     if (params.strike_price_lte !== undefined) {
-      searchParams.set("strike_price_lte", String(params.strike_price_lte));
+      searchParams.set('strike_price_lte', String(params.strike_price_lte));
     }
     if (params.limit) {
-      searchParams.set("limit", String(params.limit));
+      searchParams.set('limit', String(params.limit));
     }
     if (params.page_token) {
-      searchParams.set("page_token", params.page_token);
+      searchParams.set('page_token', params.page_token);
     }
 
     const queryString = searchParams.toString();
-    const path = `/v2/options/contracts${queryString ? `?${queryString}` : ""}`;
+    const path = `/v2/options/contracts${queryString ? `?${queryString}` : ''}`;
 
-    const response = await this.client.tradingRequest<AlpacaOptionsContractsResponse>(
-      "GET",
-      path
-    );
+    const response = await this.client.tradingRequest<AlpacaOptionsContractsResponse>('GET', path);
 
     return (response.option_contracts || []).map(parseOptionContract);
   }
@@ -310,12 +307,12 @@ export class AlpacaOptionsProvider implements OptionsProvider {
   async getContract(symbolOrId: string): Promise<OptionContract | null> {
     try {
       const response = await this.client.tradingRequest<AlpacaOptionContract>(
-        "GET",
+        'GET',
         `/v2/options/contracts/${encodeURIComponent(symbolOrId)}`
       );
       return parseOptionContract(response);
     } catch (error) {
-      if ((error as { code?: string }).code === "NOT_FOUND") {
+      if ((error as { code?: string }).code === 'NOT_FOUND') {
         return null;
       }
       throw error;
@@ -328,7 +325,7 @@ export class AlpacaOptionsProvider implements OptionsProvider {
   async findContracts(
     underlying: string,
     options: {
-      type: "call" | "put";
+      type: 'call' | 'put';
       minDTE?: number;
       maxDTE?: number;
       minStrike?: number;
@@ -341,7 +338,7 @@ export class AlpacaOptionsProvider implements OptionsProvider {
     const today = new Date();
     const minDate = new Date(today);
     const maxDate = new Date(today);
-    
+
     if (options.minDTE) {
       minDate.setDate(minDate.getDate() + options.minDTE);
     }
@@ -354,9 +351,9 @@ export class AlpacaOptionsProvider implements OptionsProvider {
     const contracts = await this.getContracts({
       underlying_symbols: [underlying.toUpperCase()],
       type: options.type,
-      status: "active",
-      expiration_date_gte: minDate.toISOString().split("T")[0],
-      expiration_date_lte: maxDate.toISOString().split("T")[0],
+      status: 'active',
+      expiration_date_gte: minDate.toISOString().split('T')[0],
+      expiration_date_lte: maxDate.toISOString().split('T')[0],
       strike_price_gte: options.minStrike,
       strike_price_lte: options.maxStrike,
       limit: options.limit || 100,

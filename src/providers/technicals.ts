@@ -1,4 +1,4 @@
-import type { Bar } from "./types";
+import type { Bar } from './types';
 
 export interface TechnicalIndicators {
   symbol: string;
@@ -28,7 +28,7 @@ export interface TechnicalIndicators {
 
 export interface Signal {
   type: string;
-  direction: "bullish" | "bearish" | "neutral";
+  direction: 'bullish' | 'bearish' | 'neutral';
   strength: number;
   description: string;
 }
@@ -59,8 +59,8 @@ export function calculateRSI(prices: number[], period: number = 14): number | nu
     changes.push(prices[i]! - prices[i - 1]!);
   }
 
-  const gains = changes.map((c) => (c > 0 ? c : 0));
-  const losses = changes.map((c) => (c < 0 ? -c : 0));
+  const gains = changes.map(c => (c > 0 ? c : 0));
+  const losses = changes.map(c => (c < 0 ? -c : 0));
 
   let avgGain = gains.slice(0, period).reduce((a, b) => a + b, 0) / period;
   let avgLoss = losses.slice(0, period).reduce((a, b) => a + b, 0) / period;
@@ -119,7 +119,7 @@ export function calculateBollingerBands(
   const slice = prices.slice(-period);
   const middle = slice.reduce((a, b) => a + b, 0) / period;
 
-  const squaredDiffs = slice.map((p) => Math.pow(p - middle, 2));
+  const squaredDiffs = slice.map(p => Math.pow(p - middle, 2));
   const variance = squaredDiffs.reduce((a, b) => a + b, 0) / period;
   const std = Math.sqrt(variance);
 
@@ -159,12 +159,9 @@ export function calculateATR(bars: Bar[], period: number = 14): number | null {
   return atr;
 }
 
-export function computeTechnicals(
-  symbol: string,
-  bars: Bar[]
-): TechnicalIndicators {
-  const closes = bars.map((b) => b.c);
-  const volumes = bars.map((b) => b.v);
+export function computeTechnicals(symbol: string, bars: Bar[]): TechnicalIndicators {
+  const closes = bars.map(b => b.c);
+  const volumes = bars.map(b => b.v);
   const currentPrice = closes[closes.length - 1] ?? 0;
   const currentVolume = volumes[volumes.length - 1] ?? 0;
 
@@ -195,15 +192,15 @@ export function detectSignals(technicals: TechnicalIndicators): Signal[] {
   if (technicals.rsi_14 !== null) {
     if (technicals.rsi_14 < 30) {
       signals.push({
-        type: "rsi_oversold",
-        direction: "bullish",
+        type: 'rsi_oversold',
+        direction: 'bullish',
         strength: (30 - technicals.rsi_14) / 30,
         description: `RSI at ${technicals.rsi_14.toFixed(1)} - oversold territory`,
       });
     } else if (technicals.rsi_14 > 70) {
       signals.push({
-        type: "rsi_overbought",
-        direction: "bearish",
+        type: 'rsi_overbought',
+        direction: 'bearish',
         strength: (technicals.rsi_14 - 70) / 30,
         description: `RSI at ${technicals.rsi_14.toFixed(1)} - overbought territory`,
       });
@@ -213,17 +210,17 @@ export function detectSignals(technicals: TechnicalIndicators): Signal[] {
   if (technicals.macd !== null) {
     if (technicals.macd.histogram > 0 && technicals.macd.macd > technicals.macd.signal) {
       signals.push({
-        type: "macd_bullish",
-        direction: "bullish",
+        type: 'macd_bullish',
+        direction: 'bullish',
         strength: Math.min(1, Math.abs(technicals.macd.histogram) * 10),
-        description: "MACD above signal line with positive histogram",
+        description: 'MACD above signal line with positive histogram',
       });
     } else if (technicals.macd.histogram < 0 && technicals.macd.macd < technicals.macd.signal) {
       signals.push({
-        type: "macd_bearish",
-        direction: "bearish",
+        type: 'macd_bearish',
+        direction: 'bearish',
         strength: Math.min(1, Math.abs(technicals.macd.histogram) * 10),
-        description: "MACD below signal line with negative histogram",
+        description: 'MACD below signal line with negative histogram',
       });
     }
   }
@@ -235,46 +232,45 @@ export function detectSignals(technicals: TechnicalIndicators): Signal[] {
 
     if (bbPosition < 0.1) {
       signals.push({
-        type: "bb_lower_touch",
-        direction: "bullish",
+        type: 'bb_lower_touch',
+        direction: 'bullish',
         strength: 1 - bbPosition * 10,
-        description: "Price near lower Bollinger Band",
+        description: 'Price near lower Bollinger Band',
       });
     } else if (bbPosition > 0.9) {
       signals.push({
-        type: "bb_upper_touch",
-        direction: "bearish",
+        type: 'bb_upper_touch',
+        direction: 'bearish',
         strength: (bbPosition - 0.9) * 10,
-        description: "Price near upper Bollinger Band",
+        description: 'Price near upper Bollinger Band',
       });
     }
   }
 
   if (technicals.sma_20 !== null && technicals.sma_50 !== null) {
-    const crossoverStrength =
-      Math.abs(technicals.sma_20 - technicals.sma_50) / technicals.price;
+    const crossoverStrength = Math.abs(technicals.sma_20 - technicals.sma_50) / technicals.price;
 
     if (technicals.sma_20 > technicals.sma_50) {
       signals.push({
-        type: "golden_cross_active",
-        direction: "bullish",
+        type: 'golden_cross_active',
+        direction: 'bullish',
         strength: Math.min(1, crossoverStrength * 20),
-        description: "20 SMA above 50 SMA (bullish trend)",
+        description: '20 SMA above 50 SMA (bullish trend)',
       });
     } else {
       signals.push({
-        type: "death_cross_active",
-        direction: "bearish",
+        type: 'death_cross_active',
+        direction: 'bearish',
         strength: Math.min(1, crossoverStrength * 20),
-        description: "20 SMA below 50 SMA (bearish trend)",
+        description: '20 SMA below 50 SMA (bearish trend)',
       });
     }
   }
 
   if (technicals.relative_volume !== null && technicals.relative_volume > 2) {
     signals.push({
-      type: "high_volume",
-      direction: "neutral",
+      type: 'high_volume',
+      direction: 'neutral',
       strength: Math.min(1, (technicals.relative_volume - 1) / 4),
       description: `Volume ${technicals.relative_volume.toFixed(1)}x average`,
     });

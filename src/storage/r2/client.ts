@@ -27,19 +27,19 @@ export class R2Client {
 
   async putJson<T = unknown>(key: string, value: T): Promise<R2Object> {
     return this.bucket.put(key, JSON.stringify(value), {
-      httpMetadata: { contentType: "application/json" },
+      httpMetadata: { contentType: 'application/json' },
     });
   }
 
   async putText(key: string, value: string): Promise<R2Object> {
     return this.bucket.put(key, value, {
-      httpMetadata: { contentType: "text/plain" },
+      httpMetadata: { contentType: 'text/plain' },
     });
   }
 
   async putMarkdown(key: string, value: string): Promise<R2Object> {
     return this.bucket.put(key, value, {
-      httpMetadata: { contentType: "text/markdown" },
+      httpMetadata: { contentType: 'text/markdown' },
     });
   }
 
@@ -57,7 +57,7 @@ export class R2Client {
 
   async listKeys(prefix?: string, limit?: number): Promise<string[]> {
     const result = await this.bucket.list({ prefix, limit });
-    return result.objects.map((o) => o.key);
+    return result.objects.map(o => o.key);
   }
 
   async exists(key: string): Promise<boolean> {

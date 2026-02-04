@@ -1,7 +1,11 @@
-import { generateId, hashObject, hmacSign, hmacVerify } from "../lib/utils";
-import { createApproval, getApprovalByToken, markApprovalUsed } from "../storage/d1/queries/approvals";
-import type { D1Client } from "../storage/d1/client";
-import type { OrderPreview, PolicyResult } from "../mcp/types";
+import { generateId, hashObject, hmacSign, hmacVerify } from '../lib/utils';
+import {
+  createApproval,
+  getApprovalByToken,
+  markApprovalUsed,
+} from '../storage/d1/queries/approvals';
+import type { D1Client } from '../storage/d1/client';
+import type { OrderPreview, PolicyResult } from '../mcp/types';
 
 export interface GenerateApprovalParams {
   preview: OrderPreview;
@@ -60,35 +64,35 @@ export async function validateApprovalToken(params: {
 }): Promise<ValidateApprovalResult> {
   const { token, secret, db } = params;
 
-  const parts = token.split(".");
+  const parts = token.split('.');
   if (parts.length !== 2) {
-    return { valid: false, reason: "Invalid token format" };
+    return { valid: false, reason: 'Invalid token format' };
   }
 
   const [approvalId, signature] = parts;
   if (!approvalId || !signature) {
-    return { valid: false, reason: "Invalid token format" };
+    return { valid: false, reason: 'Invalid token format' };
   }
 
   const approval = await getApprovalByToken(db, token);
   if (!approval) {
-    return { valid: false, reason: "Approval token not found" };
+    return { valid: false, reason: 'Approval token not found' };
   }
 
   if (approval.used_at) {
-    return { valid: false, reason: "Approval token already used" };
+    return { valid: false, reason: 'Approval token already used' };
   }
 
   const now = new Date();
   const expiresAt = new Date(approval.expires_at);
   if (now > expiresAt) {
-    return { valid: false, reason: "Approval token expired" };
+    return { valid: false, reason: 'Approval token expired' };
   }
 
   const tokenData = `${approvalId}:${approval.preview_hash}:${approval.expires_at}`;
   const isValid = await hmacVerify(tokenData, signature, secret);
   if (!isValid) {
-    return { valid: false, reason: "Invalid token signature" };
+    return { valid: false, reason: 'Invalid token signature' };
   }
 
   const orderParams = JSON.parse(approval.order_params_json) as OrderPreview;
@@ -102,9 +106,6 @@ export async function validateApprovalToken(params: {
   };
 }
 
-export async function consumeApprovalToken(
-  db: D1Client,
-  approvalId: string
-): Promise<void> {
+export async function consumeApprovalToken(db: D1Client, approvalId: string): Promise<void> {
   await markApprovalUsed(db, approvalId);
 }

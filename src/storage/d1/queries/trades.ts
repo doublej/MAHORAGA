@@ -1,5 +1,5 @@
-import { D1Client, TradeRow } from "../client";
-import { generateId, nowISO } from "../../../lib/utils";
+import { D1Client, TradeRow } from '../client';
+import { generateId, nowISO } from '../../../lib/utils';
 
 export interface CreateTradeParams {
   approval_id?: string;
@@ -14,10 +14,7 @@ export interface CreateTradeParams {
   status: string;
 }
 
-export async function createTrade(
-  db: D1Client,
-  params: CreateTradeParams
-): Promise<string> {
+export async function createTrade(db: D1Client, params: CreateTradeParams): Promise<string> {
   const id = generateId();
   const now = nowISO();
 
@@ -60,20 +57,11 @@ export async function getTradeByAlpacaOrderId(
   db: D1Client,
   alpacaOrderId: string
 ): Promise<TradeRow | null> {
-  return db.executeOne<TradeRow>(
-    `SELECT * FROM trades WHERE alpaca_order_id = ?`,
-    [alpacaOrderId]
-  );
+  return db.executeOne<TradeRow>(`SELECT * FROM trades WHERE alpaca_order_id = ?`, [alpacaOrderId]);
 }
 
-export async function getTradeById(
-  db: D1Client,
-  tradeId: string
-): Promise<TradeRow | null> {
-  return db.executeOne<TradeRow>(
-    `SELECT * FROM trades WHERE id = ?`,
-    [tradeId]
-  );
+export async function getTradeById(db: D1Client, tradeId: string): Promise<TradeRow | null> {
+  return db.executeOne<TradeRow>(`SELECT * FROM trades WHERE id = ?`, [tradeId]);
 }
 
 export async function getRecentTrades(
@@ -93,14 +81,14 @@ export async function getRecentTrades(
     );
   }
 
-  return db.execute<TradeRow>(
-    `SELECT * FROM trades ORDER BY created_at DESC LIMIT ? OFFSET ?`,
-    [limit, offset]
-  );
+  return db.execute<TradeRow>(`SELECT * FROM trades ORDER BY created_at DESC LIMIT ? OFFSET ?`, [
+    limit,
+    offset,
+  ]);
 }
 
 export async function getTradesToday(db: D1Client): Promise<TradeRow[]> {
-  const today = new Date().toISOString().split("T")[0];
+  const today = new Date().toISOString().split('T')[0];
   return db.execute<TradeRow>(
     `SELECT * FROM trades WHERE created_at >= ? ORDER BY created_at DESC`,
     [today]

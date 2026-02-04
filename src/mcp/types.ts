@@ -1,4 +1,4 @@
-import type { ToolError } from "../lib/errors";
+import type { ToolError } from '../lib/errors';
 
 export interface ToolResult<T = unknown> {
   ok: boolean;
@@ -37,14 +37,14 @@ export interface PolicyResult {
 
 export interface OrderPreview {
   symbol: string;
-  asset_class: "us_equity" | "crypto";
-  side: "buy" | "sell";
+  asset_class: 'us_equity' | 'crypto';
+  side: 'buy' | 'sell';
   qty?: number;
   notional?: number;
-  order_type: "market" | "limit" | "stop" | "stop_limit";
+  order_type: 'market' | 'limit' | 'stop' | 'stop_limit';
   limit_price?: number;
   stop_price?: number;
-  time_in_force: "day" | "gtc" | "ioc" | "fok";
+  time_in_force: 'day' | 'gtc' | 'ioc' | 'fok';
   estimated_price?: number;
   estimated_cost?: number;
   buying_power_impact?: number;
@@ -53,14 +53,14 @@ export interface OrderPreview {
 export interface OptionsOrderPreview {
   contract_symbol: string;
   underlying: string;
-  side: "buy" | "sell";
+  side: 'buy' | 'sell';
   qty: number;
-  order_type: "market" | "limit";
+  order_type: 'market' | 'limit';
   limit_price?: number;
-  time_in_force: "day" | "gtc";
+  time_in_force: 'day' | 'gtc';
   expiration: string;
   strike: number;
-  option_type: "call" | "put";
+  option_type: 'call' | 'put';
   dte: number;
   delta?: number;
   estimated_premium?: number;
@@ -78,21 +78,21 @@ export interface OptionsPolicyResult {
 }
 
 export type EventType =
-  | "earnings_guidance_cut"
-  | "earnings_beat"
-  | "earnings_miss"
-  | "merger"
-  | "acquisition"
-  | "lawsuit"
-  | "sec_filing"
-  | "insider_buy"
-  | "insider_sell"
-  | "analyst_upgrade"
-  | "analyst_downgrade"
-  | "product_launch"
-  | "macro"
-  | "rumor"
-  | "social_momentum";
+  | 'earnings_guidance_cut'
+  | 'earnings_beat'
+  | 'earnings_miss'
+  | 'merger'
+  | 'acquisition'
+  | 'lawsuit'
+  | 'sec_filing'
+  | 'insider_buy'
+  | 'insider_sell'
+  | 'analyst_upgrade'
+  | 'analyst_downgrade'
+  | 'product_launch'
+  | 'macro'
+  | 'rumor'
+  | 'social_momentum';
 
 export interface StructuredEvent {
   id: string;
@@ -106,13 +106,13 @@ export interface StructuredEvent {
   validation_errors?: string[];
 }
 
-export type TradeOutcome = "win" | "loss" | "scratch";
+export type TradeOutcome = 'win' | 'loss' | 'scratch';
 
 export interface TradeJournalEntry {
   id: string;
   trade_id?: string;
   symbol: string;
-  side: "buy" | "sell";
+  side: 'buy' | 'sell';
   entry_price?: number;
   entry_at?: string;
   exit_price?: number;

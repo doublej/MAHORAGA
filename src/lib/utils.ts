@@ -2,8 +2,8 @@ export function generateId(): string {
   const bytes = new Uint8Array(16);
   crypto.getRandomValues(bytes);
   return Array.from(bytes)
-    .map((b) => b.toString(16).padStart(2, "0"))
-    .join("");
+    .map(b => b.toString(16).padStart(2, '0'))
+    .join('');
 }
 
 export function nowISO(): string {
@@ -22,29 +22,26 @@ function simpleHash(str: string): string {
     hash = (hash << 5) - hash + char;
     hash = hash & hash;
   }
-  return Math.abs(hash).toString(16).padStart(8, "0");
+  return Math.abs(hash).toString(16).padStart(8, '0');
 }
 
-export async function hmacSign(
-  data: string,
-  secret: string
-): Promise<string> {
+export async function hmacSign(data: string, secret: string): Promise<string> {
   const encoder = new TextEncoder();
   const keyData = encoder.encode(secret);
   const messageData = encoder.encode(data);
 
   const key = await crypto.subtle.importKey(
-    "raw",
+    'raw',
     keyData,
-    { name: "HMAC", hash: "SHA-256" },
+    { name: 'HMAC', hash: 'SHA-256' },
     false,
-    ["sign"]
+    ['sign']
   );
 
-  const signature = await crypto.subtle.sign("HMAC", key, messageData);
+  const signature = await crypto.subtle.sign('HMAC', key, messageData);
   return Array.from(new Uint8Array(signature))
-    .map((b) => b.toString(16).padStart(2, "0"))
-    .join("");
+    .map(b => b.toString(16).padStart(2, '0'))
+    .join('');
 }
 
 export async function hmacVerify(
@@ -58,7 +55,7 @@ export async function hmacVerify(
 
 export function parseBoolean(value: string | undefined, defaultValue: boolean): boolean {
   if (value === undefined) return defaultValue;
-  return value.toLowerCase() === "true";
+  return value.toLowerCase() === 'true';
 }
 
 export function parseNumber(value: string | undefined, defaultValue: number): number {
@@ -68,33 +65,33 @@ export function parseNumber(value: string | undefined, defaultValue: number): nu
 }
 
 export function sleep(ms: number): Promise<void> {
-  return new Promise((resolve) => setTimeout(resolve, ms));
+  return new Promise(resolve => setTimeout(resolve, ms));
 }
 
 export function truncate(str: string, maxLength: number): string {
   if (str.length <= maxLength) return str;
-  return str.slice(0, maxLength - 3) + "...";
+  return str.slice(0, maxLength - 3) + '...';
 }
 
 export function sanitizeForLog(obj: unknown): unknown {
   if (obj === null || obj === undefined) return obj;
-  if (typeof obj !== "object") return obj;
+  if (typeof obj !== 'object') return obj;
 
   const sensitiveKeys = [
-    "password",
-    "secret",
-    "token",
-    "api_key",
-    "apiKey",
-    "authorization",
-    "approval_token",
+    'password',
+    'secret',
+    'token',
+    'api_key',
+    'apiKey',
+    'authorization',
+    'approval_token',
   ];
 
   const result: Record<string, unknown> = {};
   for (const [key, value] of Object.entries(obj)) {
-    if (sensitiveKeys.some((k) => key.toLowerCase().includes(k))) {
-      result[key] = "[REDACTED]";
-    } else if (typeof value === "object") {
+    if (sensitiveKeys.some(k => key.toLowerCase().includes(k))) {
+      result[key] = '[REDACTED]';
+    } else if (typeof value === 'object') {
       result[key] = sanitizeForLog(value);
     } else {
       result[key] = value;
@@ -108,10 +105,10 @@ export function validateRequiredFields<T extends Record<string, unknown>>(
   requiredFields: string[],
   context: { operation: string; symbol?: string; content: string }
 ): T {
-  if (!obj || typeof obj !== "object") {
+  if (!obj || typeof obj !== 'object') {
     throw new Error(
-      `${context.operation} validation failed${context.symbol ? ` for ${context.symbol}` : ""}: ` +
-      `Expected object, got ${typeof obj}. Content preview: ${truncate(context.content, 100)}`
+      `${context.operation} validation failed${context.symbol ? ` for ${context.symbol}` : ''}: ` +
+        `Expected object, got ${typeof obj}. Content preview: ${truncate(context.content, 100)}`
     );
   }
 
@@ -124,8 +121,8 @@ export function validateRequiredFields<T extends Record<string, unknown>>(
 
   if (missing.length > 0) {
     throw new Error(
-      `${context.operation} validation failed${context.symbol ? ` for ${context.symbol}` : ""}: ` +
-      `Missing required fields: ${missing.join(", ")}. Content preview: ${truncate(context.content, 100)}`
+      `${context.operation} validation failed${context.symbol ? ` for ${context.symbol}` : ''}: ` +
+        `Missing required fields: ${missing.join(', ')}. Content preview: ${truncate(context.content, 100)}`
     );
   }
 

@@ -1,34 +1,30 @@
-import type { Env } from "../env.d";
-import { createD1Client } from "../storage/d1/client";
-import { createAlpacaProviders } from "../providers/alpaca";
-import { resetDailyLoss, getRiskState } from "../storage/d1/queries/risk-state";
-import { cleanupExpiredApprovals } from "../storage/d1/queries/approvals";
-import {
-  insertRawEvent,
-  rawEventExists,
-} from "../storage/d1/queries/events";
-import { createSECEdgarProvider } from "../providers/news/sec-edgar";
+import type { Env } from '../env.d';
+import { createD1Client } from '../storage/d1/client';
+import { createAlpacaProviders } from '../providers/alpaca';
+import { resetDailyLoss, getRiskState } from '../storage/d1/queries/risk-state';
+import { cleanupExpiredApprovals } from '../storage/d1/queries/approvals';
+import { insertRawEvent, rawEventExists } from '../storage/d1/queries/events';
+import { createSECEdgarProvider } from '../providers/news/sec-edgar';
 
 export async function handleCronEvent(cronId: string, env: Env): Promise<void> {
-
   switch (cronId) {
-    case "*/5 13-20 * * 1-5":
+    case '*/5 13-20 * * 1-5':
       await runEventIngestion(env);
       break;
 
-    case "0 14 * * 1-5":
+    case '0 14 * * 1-5':
       await runMarketOpenPrep(env);
       break;
 
-    case "30 21 * * 1-5":
+    case '30 21 * * 1-5':
       await runMarketCloseCleanup(env);
       break;
 
-    case "0 5 * * *":
+    case '0 5 * * *':
       await runMidnightReset(env);
       break;
 
-    case "0 * * * *":
+    case '0 * * * *':
       await runHourlyCacheRefresh(env);
       break;
 
@@ -38,7 +34,7 @@ export async function handleCronEvent(cronId: string, env: Env): Promise<void> {
 }
 
 async function runEventIngestion(env: Env): Promise<void> {
-  console.log("Starting event ingestion...");
+  console.log('Starting event ingestion...');
 
   const db = createD1Client(env.DB);
   const alpaca = createAlpacaProviders(env);
@@ -47,13 +43,13 @@ async function runEventIngestion(env: Env): Promise<void> {
     const clock = await alpaca.trading.getClock();
 
     if (!clock.is_open) {
-      console.log("Market closed, skipping event ingestion");
+      console.log('Market closed, skipping event ingestion');
       return;
     }
 
     const riskState = await getRiskState(db);
     if (riskState.kill_switch_active) {
-      console.log("Kill switch active, skipping event ingestion");
+      console.log('Kill switch active, skipping event ingestion');
       return;
     }
 
@@ -75,29 +71,30 @@ async function runEventIngestion(env: Env): Promise<void> {
 
     console.log(`Event ingestion complete: ${newEvents} new events`);
   } catch (error) {
-    console.error("Event ingestion error:", error);
+    console.error('Event ingestion error:', error);
   }
 }
 
 async function runMarketOpenPrep(env: Env): Promise<void> {
-  console.log("Running market open prep...");
+  console.log('Running market open prep...');
 
   const db = createD1Client(env.DB);
 
   try {
     const riskState = await getRiskState(db);
-    console.log(`Risk state at open: kill_switch=${riskState.kill_switch_active}, daily_loss=${riskState.daily_loss_usd}`);
+    console.log(
+      `Risk state at open: kill_switch=${riskState.kill_switch_active}, daily_loss=${riskState.daily_loss_usd}`
+    );
 
     const cleaned = await cleanupExpiredApprovals(db);
     console.log(`Cleaned up ${cleaned} expired approvals`);
-
   } catch (error) {
-    console.error("Market open prep error:", error);
+    console.error('Market open prep error:', error);
   }
 }
 
 async function runMarketCloseCleanup(env: Env): Promise<void> {
-  console.log("Running market close cleanup...");
+  console.log('Running market close cleanup...');
 
   const db = createD1Client(env.DB);
   const alpaca = createAlpacaProviders(env);
@@ -110,30 +107,28 @@ async function runMarketCloseCleanup(env: Env): Promise<void> {
 
     const cleaned = await cleanupExpiredApprovals(db);
     console.log(`Cleaned up ${cleaned} expired approvals`);
-
   } catch (error) {
-    console.error("Market close cleanup error:", error);
+    console.error('Market close cleanup error:', error);
   }
 }
 
 async function runMidnightReset(env: Env): Promise<void> {
-  console.log("Running midnight reset...");
+  console.log('Running midnight reset...');
 
   const db = createD1Client(env.DB);
 
   try {
     await resetDailyLoss(db);
-    console.log("Daily loss counter reset");
+    console.log('Daily loss counter reset');
 
     const cleaned = await cleanupExpiredApprovals(db);
     console.log(`Cleaned up ${cleaned} expired approvals`);
-
   } catch (error) {
-    console.error("Midnight reset error:", error);
+    console.error('Midnight reset error:', error);
   }
 }
 
 async function runHourlyCacheRefresh(_env: Env): Promise<void> {
-  console.log("Running hourly cache refresh...");
+  console.log('Running hourly cache refresh...');
   // TODO: Implement cache refresh for KV-cached data (movers, macro, etc.)
 }

@@ -1,5 +1,5 @@
-import { D1Client, ToolLogEntry } from "../client";
-import { generateId, nowISO, hashObject } from "../../../lib/utils";
+import { D1Client, ToolLogEntry } from '../client';
+import { generateId, nowISO, hashObject } from '../../../lib/utils';
 
 export async function insertToolLog(
   db: D1Client,

@@ -8,7 +8,7 @@ export interface StockTwitMessage {
   };
   symbols: Array<{ symbol: string }>;
   entities?: {
-    sentiment?: { basic: "Bullish" | "Bearish" | null };
+    sentiment?: { basic: 'Bullish' | 'Bearish' | null };
   };
 }
 
@@ -27,7 +27,7 @@ interface StockTwitsTrendingResponse {
 }
 
 export class StockTwitsProvider {
-  private baseUrl = "https://api.stocktwits.com/api/2";
+  private baseUrl = 'https://api.stocktwits.com/api/2';
 
   async getTrendingSymbols(): Promise<StockTwitsTrending[]> {
     const response = await fetch(`${this.baseUrl}/trending/symbols.json`);
@@ -39,9 +39,7 @@ export class StockTwitsProvider {
   }
 
   async getSymbolStream(symbol: string, limit = 30): Promise<StockTwitMessage[]> {
-    const response = await fetch(
-      `${this.baseUrl}/streams/symbol/${symbol}.json?limit=${limit}`
-    );
+    const response = await fetch(`${this.baseUrl}/streams/symbol/${symbol}.json?limit=${limit}`);
     if (!response.ok) {
       if (response.status === 404) return [];
       throw new Error(`StockTwits API error: ${response.status}`);
@@ -51,9 +49,7 @@ export class StockTwitsProvider {
   }
 
   async getTrendingStream(limit = 30): Promise<StockTwitMessage[]> {
-    const response = await fetch(
-      `${this.baseUrl}/streams/trending.json?limit=${limit}`
-    );
+    const response = await fetch(`${this.baseUrl}/streams/trending.json?limit=${limit}`);
     if (!response.ok) {
       throw new Error(`StockTwits API error: ${response.status}`);
     }
@@ -69,7 +65,10 @@ export class StockTwitsProvider {
     score: number;
     trending_users: string[];
   }[] {
-    const bySymbol = new Map<string, { bullish: number; bearish: number; total: number; users: Set<string> }>();
+    const bySymbol = new Map<
+      string,
+      { bullish: number; bearish: number; total: number; users: Set<string> }
+    >();
 
     for (const msg of messages) {
       for (const sym of msg.symbols) {
@@ -81,8 +80,8 @@ export class StockTwitsProvider {
         data.users.add(msg.user.username);
 
         const sentiment = msg.entities?.sentiment?.basic;
-        if (sentiment === "Bullish") data.bullish++;
-        else if (sentiment === "Bearish") data.bearish++;
+        if (sentiment === 'Bullish') data.bullish++;
+        else if (sentiment === 'Bearish') data.bearish++;
       }
     }
 
