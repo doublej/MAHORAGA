@@ -717,7 +717,7 @@ export class MahoragaHarness extends DurableObject<Env> {
   private handleGetLogs(url: URL): Response {
     const limit = parseInt(url.searchParams.get("limit") || "100");
     const logs = this.state.logs.slice(-limit);
-    return this.jsonResponse({ logs });
+    return this.jsonResponse({ ok: true, data: { logs } });
   }
 
   private async handleKillSwitch(): Promise<Response> {
