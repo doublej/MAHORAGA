@@ -653,11 +653,11 @@ export class MahoragaHarness extends DurableObject<Env> {
 
   private async handleStatus(): Promise<Response> {
     const alpaca = createAlpacaProviders(this.env);
-    
+
     let account: Account | null = null;
     let positions: Position[] = [];
     let clock: MarketClock | null = null;
-    
+
     try {
       [account, positions, clock] = await Promise.all([
         alpaca.trading.getAccount(),
@@ -667,7 +667,16 @@ export class MahoragaHarness extends DurableObject<Env> {
     } catch (e) {
       // Ignore - will return null
     }
-    
+
+    // Normalize research data to ensure entry_quality exists
+    const normalizedResearch: Record<string, ResearchResult> = {};
+    for (const [symbol, research] of Object.entries(this.state.signalResearch)) {
+      normalizedResearch[symbol] = {
+        ...research,
+        entry_quality: research.entry_quality || "fair"
+      };
+    }
+
     return this.jsonResponse({
       ok: true,
       data: {
@@ -681,7 +690,7 @@ export class MahoragaHarness extends DurableObject<Env> {
         costs: this.state.costTracker,
         lastAnalystRun: this.state.lastAnalystRun,
         lastResearchRun: this.state.lastResearchRun,
-        signalResearch: this.state.signalResearch,
+        signalResearch: normalizedResearch,
         positionResearch: this.state.positionResearch,
         positionEntries: this.state.positionEntries,
         twitterConfirmations: this.state.twitterConfirmations,
@@ -1130,7 +1139,7 @@ JSON response:
         symbol,
         verdict: analysis.verdict,
         confidence: analysis.confidence,
-        entry_quality: analysis.entry_quality,
+        entry_quality: analysis.entry_quality || "fair",
         reasoning: analysis.reasoning,
         red_flags: analysis.red_flags || [],
         catalysts: analysis.catalysts || [],
@@ -1497,7 +1506,7 @@ JSON response:
         symbol,
         verdict: analysis.verdict,
         confidence: analysis.confidence,
-        entry_quality: analysis.entry_quality,
+        entry_quality: analysis.entry_quality || "fair",
         reasoning: analysis.reasoning,
         red_flags: analysis.red_flags || [],
         catalysts: analysis.catalysts || [],
