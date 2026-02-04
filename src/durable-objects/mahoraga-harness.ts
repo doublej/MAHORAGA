@@ -433,6 +433,18 @@ export class MahoragaHarness extends DurableObject<Env> {
       const stored = await this.ctx.storage.get<AgentState>("state");
       if (stored) {
         this.state = { ...DEFAULT_STATE, ...stored };
+        // Clean up old research entries missing required fields
+        let cleanupNeeded = false;
+        for (const [symbol, research] of Object.entries(this.state.signalResearch)) {
+          if (research.sentiment === undefined || research.confidence === undefined) {
+            delete this.state.signalResearch[symbol];
+            cleanupNeeded = true;
+          }
+        }
+        if (cleanupNeeded) {
+          await this.persist();
+          console.log("[MahoragaHarness] Cleaned up old research entries");
+        }
       }
     });
   }
@@ -669,14 +681,16 @@ export class MahoragaHarness extends DurableObject<Env> {
       // Ignore - will return null
     }
 
-    // Normalize research data to ensure all required fields exist
+    // Filter out old/invalid research data and normalize
     const normalizedResearch: Record<string, ResearchResult> = {};
     for (const [symbol, research] of Object.entries(this.state.signalResearch)) {
+      // Skip research entries missing required fields (old format)
+      if (research.sentiment === undefined || research.confidence === undefined) {
+        continue;
+      }
       normalizedResearch[symbol] = {
         ...research,
-        confidence: research.confidence ?? 0.5,
         entry_quality: research.entry_quality || "fair",
-        sentiment: research.sentiment ?? 0.5,
       };
     }
 
