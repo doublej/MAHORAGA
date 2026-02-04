@@ -10,9 +10,9 @@
     "ENVIRONMENT": "production",
     "FEATURE_LLM_RESEARCH": "true",
     "FEATURE_OPTIONS": "true",
-    "DEFAULT_MAX_POSITION_PCT": "0.10",
-    "DEFAULT_MAX_NOTIONAL_PER_TRADE": "5000",
-    "DEFAULT_MAX_DAILY_LOSS_PCT": "0.02",
+    "DEFAULT_MAX_POSITION_PCT": "0.15",
+    "DEFAULT_MAX_NOTIONAL_PER_TRADE": "10000",
+    "DEFAULT_MAX_DAILY_LOSS_PCT": "0.03",
     "DEFAULT_COOLDOWN_MINUTES": "30",
     "DEFAULT_MAX_OPEN_POSITIONS": "10",
     "DEFAULT_APPROVAL_TTL_SECONDS": "300"
@@ -22,10 +22,12 @@
   // Required:
   // - ALPACA_API_KEY
   // - ALPACA_API_SECRET
-  // - OPENAI_API_KEY
   // - MAHORAGA_API_TOKEN (API authentication - generate with: openssl rand -base64 48)
   // - KILL_SWITCH_SECRET (emergency kill switch + approval token signing)
   // Optional:
+  // - LLM_PROVIDER ("openai" | "claude" | "auto")
+  // - OPENAI_API_KEY (for LLM features with OpenAI)
+  // - ANTHROPIC_API_KEY (for LLM features with Claude)
   // - ALPACA_PAPER ("true" for paper trading)
   // - TWITTER_BEARER_TOKEN
   // - DISCORD_WEBHOOK_URL
@@ -80,8 +82,15 @@
     ]
   },
 
+  "assets": {
+    "directory": "dashboard/build",
+    "binding": "ASSETS",
+    "html_handling": "drop-trailing-slash",
+    "not_found_handling": "single-page-application"
+  },
+
   "build": {
-    "command": "npm run build"
+    "command": "cd dashboard && npm run build"
   },
 
   "dev": {

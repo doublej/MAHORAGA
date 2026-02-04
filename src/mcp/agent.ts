@@ -4,8 +4,8 @@ import { z } from "zod";
 import type { Env } from "../env.d";
 import { createD1Client, D1Client } from "../storage/d1/client";
 import { createAlpacaProviders } from "../providers/alpaca";
-import { getDefaultPolicyConfig, PolicyConfig } from "../policy/config";
-import { getPolicyConfig } from "../storage/d1/queries/policy-config";
+import { getDefaultPolicyConfig, PolicyConfig, validatePolicyConfig } from "../policy/config";
+import { getPolicyConfig, savePolicyConfig } from "../storage/d1/queries/policy-config";
 import { generateId } from "../lib/utils";
 import { success, failure } from "./types";
 import { ErrorCode } from "../lib/errors";
@@ -33,7 +33,7 @@ import {
 } from "../storage/d1/queries/events";
 import { computeTechnicals, detectSignals, type TechnicalIndicators, type Signal } from "../providers/technicals";
 import { scrapeUrl, extractFinancialData, isAllowedDomain } from "../providers/scraper";
-import { createOpenAIProvider } from "../providers/llm/openai";
+import { createLLMProvider } from "../providers/llm/factory";
 import { classifyEvent, generateResearchReport, summarizeLearnedRules } from "../providers/llm/classifier";
 import { getDTE } from "../providers/alpaca/options";
 import type { LLMProvider, OptionsProvider } from "../providers/types";
@@ -60,9 +60,7 @@ export class MahoragaMcpAgent extends McpAgent<Env> {
     const storedPolicy = await getPolicyConfig(db);
     this.policyConfig = storedPolicy ?? getDefaultPolicyConfig(this.env);
 
-    if (this.env.OPENAI_API_KEY && this.env.FEATURE_LLM_RESEARCH === "true") {
-      this.llm = createOpenAIProvider({ apiKey: this.env.OPENAI_API_KEY });
-    }
+    this.llm = createLLMProvider(this.env);
 
     this.options = alpaca.options;
 
@@ -569,6 +567,43 @@ export class MahoragaMcpAgent extends McpAgent<Env> {
         }
       }
     );
+
+    this.server.tool(
+      "policy-config-get",
+      "Get current active policy configuration",
+      {},
+      async () => {
+        const result = success({ policy: this.policyConfig });
+        return { content: [{ type: "text" as const, text: JSON.stringify(result, null, 2) }] };
+      }
+    );
+
+    this.server.tool(
+      "policy-config-update",
+      "Update policy configuration (requires agent restart to take effect)",
+      { config: z.record(z.unknown()) },
+      async ({ config }) => {
+        try {
+          const merged = { ...this.policyConfig, ...config };
+          const validated = validatePolicyConfig(merged);
+          await savePolicyConfig(db, validated);
+
+          const result = success({
+            message: "Policy updated in database. Restart agent to apply changes.",
+            updated_config: validated
+          });
+          return { content: [{ type: "text" as const, text: JSON.stringify(result, null, 2) }] };
+        } catch (error) {
+          return {
+            content: [{ type: "text" as const, text: JSON.stringify(failure({
+              code: ErrorCode.INVALID_INPUT,
+              message: String(error)
+            }), null, 2) }],
+            isError: true
+          };
+        }
+      }
+    );
   }
 
   private registerUtilityTools() {
@@ -597,7 +632,7 @@ export class MahoragaMcpAgent extends McpAgent<Env> {
           { category: "Account", tools: ["accounts-get", "portfolio-get"] },
           { category: "Positions", tools: ["positions-list", "positions-close"] },
           { category: "Orders", tools: ["orders-preview", "orders-submit", "orders-list", "orders-cancel"] },
-          { category: "Risk", tools: ["risk-status", "kill-switch-enable", "kill-switch-disable"] },
+          { category: "Risk", tools: ["risk-status", "kill-switch-enable", "kill-switch-disable", "policy-config-get", "policy-config-update"] },
           { category: "Memory", tools: ["memory-log-trade", "memory-log-outcome", "memory-query", "memory-summarize", "memory-set-preferences"] },
           { category: "Market Data", tools: ["symbol-overview", "prices-bars", "market-clock", "market-movers", "market-quote"] },
           { category: "Technicals", tools: ["technicals-get", "signals-get", "signals-batch"] },
