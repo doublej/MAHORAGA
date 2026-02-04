@@ -36,10 +36,10 @@
  */
 
 import { DurableObject } from "cloudflare:workers";
-import OpenAI from "openai";
 import type { Env } from "../env.d";
 import { createAlpacaProviders } from "../providers/alpaca";
-import type { Account, Position, MarketClock } from "../providers/types";
+import type { Account, Position, MarketClock, LLMProvider } from "../providers/types";
+import { createLLMProvider } from "../providers/llm/factory";
 
 // ============================================================================
 // SECTION 1: TYPES & CONFIGURATION
@@ -76,8 +76,8 @@ interface AgentConfig {
   stale_no_mentions_hours: number;   // [TUNE] Exit if no mentions for N hours
   
   // LLM configuration
-  llm_model: string;               // [TUNE] Model for quick research (gpt-4o-mini)
-  llm_analyst_model: string;       // [TUNE] Model for deep analysis (gpt-4o)
+  llm_model: string;               // [TUNE] Model for quick research (claude-haiku)
+  llm_analyst_model: string;       // [TUNE] Model for deep analysis (claude-haiku)
   llm_max_tokens: number;
   
   // Options trading - trade options instead of shares for high-conviction plays
@@ -270,8 +270,8 @@ const DEFAULT_CONFIG: AgentConfig = {
   stale_mid_min_gain_pct: 3,
   stale_social_volume_decay: 0.3,
   stale_no_mentions_hours: 24,
-  llm_model: "gpt-4o-mini",
-  llm_analyst_model: "gpt-4o",
+  llm_model: "claude-haiku-4-20250414",
+  llm_analyst_model: "claude-haiku-4-20250414",
   llm_max_tokens: 500,
   options_enabled: false,
   options_min_confidence: 0.8,
@@ -416,16 +416,16 @@ function detectSentiment(text: string): number {
 
 export class MahoragaHarness extends DurableObject<Env> {
   private state: AgentState = { ...DEFAULT_STATE };
-  private _openai: OpenAI | null = null;
+  private _llm: LLMProvider | null = null;
 
   constructor(ctx: DurableObjectState, env: Env) {
     super(ctx, env);
-    
-    if (env.OPENAI_API_KEY) {
-      this._openai = new OpenAI({ apiKey: env.OPENAI_API_KEY });
-      console.log("[MahoragaHarness] OpenAI initialized");
+
+    this._llm = createLLMProvider(env);
+    if (this._llm) {
+      console.log("[MahoragaHarness] LLM provider initialized");
     } else {
-      console.log("[MahoragaHarness] WARNING: OPENAI_API_KEY not found - research disabled");
+      console.log("[MahoragaHarness] WARNING: No LLM provider configured - research disabled");
     }
     
     this.ctx.blockConcurrencyWhile(async () => {
@@ -582,6 +582,14 @@ export class MahoragaHarness extends DurableObject<Env> {
   async fetch(request: Request): Promise<Response> {
     const url = new URL(request.url);
     const action = url.pathname.slice(1);
+
+    if (action === "health") {
+      return this.jsonResponse({
+        status: "ok",
+        do_id: this.ctx.id.toString(),
+        cf_colo: request.cf?.colo || "unknown"
+      });
+    }
 
     const protectedActions = ["enable", "disable", "config", "trigger", "status", "logs", "costs", "signals", "setup/status"];
     if (protectedActions.includes(action)) {
@@ -1062,8 +1070,8 @@ export class MahoragaHarness extends DurableObject<Env> {
     momentum: number,
     sentiment: number
   ): Promise<ResearchResult | null> {
-    if (!this._openai) {
-      this.log("Crypto", "skipped_no_openai", { symbol, reason: "OPENAI_API_KEY not configured" });
+    if (!this._llm) {
+      this.log("Crypto", "skipped_no_llm", { symbol, reason: "No LLM provider configured" });
       return null;
     }
 
@@ -1096,22 +1104,19 @@ JSON response:
   "catalysts": ["positive factors"]
 }`;
 
-      const response = await this._openai.chat.completions.create({
-        model: "gpt-4o-mini",
+      const response = await this._llm.complete({
         messages: [
           { role: "system", content: "You are a crypto analyst. Be skeptical of FOMO. Crypto is volatile - only recommend BUY for strong setups. Output valid JSON only." },
           { role: "user", content: prompt },
         ],
         max_tokens: 250,
         temperature: 0.3,
+        response_format: { type: "json_object" },
       });
 
-      const usage = response.usage;
-      if (usage) {
-        this.trackLLMCost("gpt-4o-mini", usage.prompt_tokens, usage.completion_tokens);
-      }
+      this.trackLLMCost(this.state.config.llm_model, response.usage.prompt_tokens, response.usage.completion_tokens);
 
-      const content = response.choices[0]?.message?.content || "{}";
+      const content = response.content || "{}";
       const analysis = JSON.parse(content.replace(/```json\n?|```/g, "").trim()) as {
         verdict: "BUY" | "SKIP" | "WAIT";
         confidence: number;
@@ -1430,8 +1435,8 @@ JSON response:
     sentimentScore: number,
     sources: string[]
   ): Promise<ResearchResult | null> {
-    if (!this._openai) {
-      this.log("SignalResearch", "skipped_no_openai", { symbol, reason: "OPENAI_API_KEY not configured" });
+    if (!this._llm) {
+      this.log("SignalResearch", "skipped_no_llm", { symbol, reason: "No LLM provider configured" });
       return null;
     }
 
@@ -1466,22 +1471,19 @@ JSON response:
   "catalysts": ["positive factors"]
 }`;
 
-      const response = await this._openai.chat.completions.create({
-        model: "gpt-4o-mini",
+      const response = await this._llm.complete({
         messages: [
           { role: "system", content: "You are a stock research analyst. Be skeptical of hype. Output valid JSON only." },
           { role: "user", content: prompt },
         ],
         max_tokens: 250,
         temperature: 0.3,
+        response_format: { type: "json_object" },
       });
 
-      const usage = response.usage;
-      if (usage) {
-        this.trackLLMCost("gpt-4o-mini", usage.prompt_tokens, usage.completion_tokens);
-      }
+      this.trackLLMCost(this.state.config.llm_model, response.usage.prompt_tokens, response.usage.completion_tokens);
 
-      const content = response.choices[0]?.message?.content || "{}";
+      const content = response.content || "{}";
       const analysis = JSON.parse(content.replace(/```json\n?|```/g, "").trim()) as {
         verdict: "BUY" | "SKIP" | "WAIT";
         confidence: number;
@@ -1583,7 +1585,7 @@ JSON response:
     reasoning: string;
     key_factors: string[];
   } | null> {
-    if (!this._openai) return null;
+    if (!this._llm) return null;
 
     const plPct = (position.unrealized_pl / (position.market_value - position.unrealized_pl)) * 100;
 
@@ -1604,22 +1606,19 @@ Provide a brief risk assessment and recommendation (HOLD, SELL, or ADD). JSON fo
 }`;
 
     try {
-      const response = await this._openai.chat.completions.create({
-        model: "gpt-4o-mini",
+      const result = await this._llm.complete({
         messages: [
           { role: "system", content: "You are a position risk analyst. Be concise. Output valid JSON only." },
           { role: "user", content: prompt },
         ],
         max_tokens: 200,
         temperature: 0.3,
+        response_format: { type: "json_object" },
       });
 
-      const usage = response.usage;
-      if (usage) {
-        this.trackLLMCost("gpt-4o-mini", usage.prompt_tokens, usage.completion_tokens);
-      }
+      this.trackLLMCost(this.state.config.llm_model, result.usage.prompt_tokens, result.usage.completion_tokens);
 
-      const content = response.choices[0]?.message?.content || "{}";
+      const content = result.content || "{}";
       const analysis = JSON.parse(content.replace(/```json\n?|```/g, "").trim()) as {
         recommendation: "HOLD" | "SELL" | "ADD";
         risk_level: "low" | "medium" | "high";
@@ -1656,7 +1655,7 @@ Provide a brief risk assessment and recommendation (HOLD, SELL, or ADD). JSON fo
     market_summary: string;
     high_conviction: string[];
   }> {
-    if (!this._openai || signals.length === 0) {
+    if (!this._llm || signals.length === 0) {
       return { recommendations: [], market_summary: "No signals to analyze", high_conviction: [] };
     }
 
@@ -1713,7 +1712,7 @@ TRADING RULES:
 Analyze and provide BUY/SELL/HOLD recommendations:`;
 
     try {
-      const response = await this._openai.chat.completions.create({
+      const result = await this._llm.complete({
         model: this.state.config.llm_analyst_model,
         messages: [
           {
@@ -1739,14 +1738,12 @@ Response format:
         ],
         max_tokens: 800,
         temperature: 0.4,
+        response_format: { type: "json_object" },
       });
 
-      const usage = response.usage;
-      if (usage) {
-        this.trackLLMCost(this.state.config.llm_analyst_model, usage.prompt_tokens, usage.completion_tokens);
-      }
+      this.trackLLMCost(this.state.config.llm_analyst_model, result.usage.prompt_tokens, result.usage.completion_tokens);
 
-      const content = response.choices[0]?.message?.content || "{}";
+      const content = result.content || "{}";
       const analysis = JSON.parse(content.replace(/```json\n?|```/g, "").trim()) as {
         recommendations: Array<{
           action: "BUY" | "SELL" | "HOLD";
@@ -2424,11 +2421,13 @@ Response format:
 
   public trackLLMCost(model: string, tokensIn: number, tokensOut: number): number {
     const pricing: Record<string, { input: number; output: number }> = {
+      "claude-haiku-4-20250414": { input: 0.80, output: 4.0 },
+      "claude-sonnet-4-20250514": { input: 3.0, output: 15.0 },
       "gpt-4o": { input: 2.5, output: 10 },
       "gpt-4o-mini": { input: 0.15, output: 0.6 },
     };
-    
-    const rates = pricing[model] ?? pricing["gpt-4o"]!;
+
+    const rates = pricing[model] ?? pricing["claude-haiku-4-20250414"]!;
     const cost = (tokensIn * rates.input + tokensOut * rates.output) / 1_000_000;
     
     this.state.costTracker.total_usd += cost;
@@ -2453,8 +2452,8 @@ Response format:
     return new Promise(resolve => setTimeout(resolve, ms));
   }
 
-  get openai(): OpenAI | null {
-    return this._openai;
+  get llm(): LLMProvider | null {
+    return this._llm;
   }
 
   private discordCooldowns: Map<string, number> = new Map();
@@ -2558,7 +2557,7 @@ export function getHarnessStub(env: Env): DurableObjectStub {
     throw new Error("MAHORAGA_HARNESS binding not configured - check wrangler.toml");
   }
   const id = env.MAHORAGA_HARNESS.idFromName("main");
-  return env.MAHORAGA_HARNESS.get(id);
+  return env.MAHORAGA_HARNESS.get(id, { locationHint: "wnam" });
 }
 
 export async function getHarnessStatus(env: Env): Promise<unknown> {

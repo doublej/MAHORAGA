@@ -1,0 +1,14 @@
+name: Warmup DOs in US Region
+on:
+  workflow_dispatch:
+
+jobs:
+  warmup:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Call warmup endpoint from US
+        run: |
+          curl -X POST https://mahoraga.jurrejan.workers.dev/admin/warmup \
+            -H "Authorization: Bearer ${{ secrets.MAHORAGA_API_TOKEN }}" \
+            -H "Content-Type: application/json" \
+            -v

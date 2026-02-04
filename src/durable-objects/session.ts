@@ -157,7 +157,7 @@ export class SessionDO extends DurableObject<Env> {
 
 export function getSessionStub(env: Env, sessionId: string): DurableObjectStub {
   const id = env.SESSION.idFromName(sessionId);
-  return env.SESSION.get(id);
+  return env.SESSION.get(id, { locationHint: "wnam" });
 }
 
 export async function getSessionState(

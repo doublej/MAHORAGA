@@ -52,24 +52,6 @@ export default {
       );
     }
 
-    if (url.pathname === "/") {
-      return new Response(
-        JSON.stringify({
-          name: "mahoraga",
-          version: "0.3.0",
-          description: "Autonomous LLM-powered trading agent on Cloudflare Workers",
-          endpoints: {
-            health: "/health",
-            mcp: "/mcp (auth required)",
-            agent: "/agent/* (auth required)",
-          },
-        }),
-        {
-          headers: { "Content-Type": "application/json" },
-        }
-      );
-    }
-
     if (url.pathname.startsWith("/mcp")) {
       if (!isAuthorized(request, env)) {
         return unauthorizedResponse();
@@ -89,7 +71,39 @@ export default {
       }));
     }
 
-    return new Response("Not found", { status: 404 });
+    if (url.pathname === "/admin/warmup" && request.method === "POST") {
+      if (!isAuthorized(request, env)) {
+        return unauthorizedResponse();
+      }
+
+      try {
+        const harness = getHarnessStub(env);
+        const healthResponse = await harness.fetch(new Request("http://harness/health"));
+        const healthData = await healthResponse.json() as { status: string; do_id: string; cf_colo: string };
+
+        return new Response(JSON.stringify({
+          success: true,
+          message: "DOs initialized from current region",
+          cf_ray: request.headers.get("cf-ray"),
+          cf_colo: request.cf?.colo || "unknown",
+          do_colo: healthData.cf_colo,
+          do_id: healthData.do_id
+        }), {
+          headers: { "Content-Type": "application/json" }
+        });
+      } catch (error) {
+        return new Response(JSON.stringify({
+          success: false,
+          error: String(error)
+        }), {
+          status: 500,
+          headers: { "Content-Type": "application/json" }
+        });
+      }
+    }
+
+    // Serve dashboard static assets for all other routes
+    return env.ASSETS.fetch(request);
   },
 
   async scheduled(
