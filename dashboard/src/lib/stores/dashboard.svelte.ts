@@ -1,6 +1,6 @@
-import { fetchStatus, fetchSetupStatus, saveConfig } from '$lib/api'
+import { fetchStatus, fetchSetupStatus, saveConfig, fetchLogs } from '$lib/api'
 import { generateMockPortfolioHistory, generateMockPriceHistory } from '$lib/mock'
-import type { Config, PortfolioSnapshot, Status } from '$lib/types'
+import type { Config, PortfolioSnapshot, Status, LogEntry } from '$lib/types'
 
 const POSITION_COLORS = ['cyan', 'purple', 'yellow', 'blue', 'green'] as const
 type ChartVariant = (typeof POSITION_COLORS)[number]
@@ -12,6 +12,8 @@ class DashboardStore {
   setupChecked = $state(false)
   time = $state(new Date())
   portfolioHistory = $state<PortfolioSnapshot[]>([])
+  fullLogs = $state<LogEntry[]>([])
+  logFilters = $state<{ agent?: string; action?: string; symbol?: string }>({})
 
   private pollInterval: ReturnType<typeof setInterval> | null = null
   private timeInterval: ReturnType<typeof setInterval> | null = null
@@ -107,6 +109,19 @@ class DashboardStore {
       .filter((s): s is NonNullable<typeof s> => s !== null)
   }
 
+  get filteredLogs(): LogEntry[] {
+    return this.fullLogs.filter((log) => {
+      if (this.logFilters.agent && log.agent !== this.logFilters.agent) return false
+      if (this.logFilters.action && log.action !== this.logFilters.action) return false
+      if (
+        this.logFilters.symbol &&
+        !log.symbol?.toLowerCase().includes(this.logFilters.symbol.toLowerCase())
+      )
+        return false
+      return true
+    })
+  }
+
   async checkSetup() {
     const { data } = await fetchSetupStatus()
     if (data && !data.configured) this.showSetup = true
@@ -121,6 +136,13 @@ class DashboardStore {
       this.updatePortfolioHistory(data)
     } else if (error) {
       this.error = error
+    }
+  }
+
+  async fetchFullLogs(limit: number = 1000) {
+    const { data } = await fetchLogs(limit)
+    if (data) {
+      this.fullLogs = data.logs
     }
   }
 

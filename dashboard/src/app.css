@@ -140,4 +140,90 @@
     opacity: 0.5;
     cursor: not-allowed;
   }
+
+  /* Research Card Expansion */
+  .research-card-collapsed {
+    cursor: pointer;
+    transition: all 200ms ease;
+  }
+
+  .research-card-collapsed:hover {
+    border-color: var(--color-hud-line) !important;
+  }
+
+  .research-card-expanded {
+    border-color: var(--color-hud-primary) !important;
+    box-shadow: 0 0 8px rgba(142, 180, 194, 0.15);
+  }
+
+  .research-section {
+    border-top: 1px solid var(--color-hud-line);
+    padding-top: 0.75rem;
+  }
+
+  .research-section:first-child {
+    border-top: none;
+    padding-top: 0;
+  }
+
+  /* Modal Styles */
+  .modal-backdrop {
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.75);
+    backdrop-filter: blur(4px);
+    z-index: 50;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .modal-content {
+    position: fixed;
+    inset: 2rem;
+    background: var(--color-hud-bg);
+    border: 1px solid var(--color-hud-line);
+    border-radius: 4px;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    max-width: 1400px;
+    max-height: calc(100vh - 4rem);
+    margin: auto;
+  }
+
+  .modal-header {
+    padding: 1rem;
+    border-bottom: 1px solid var(--color-hud-line);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-shrink: 0;
+  }
+
+  .modal-body {
+    flex: 1;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+  }
+
+  .modal-close {
+    background: transparent;
+    border: none;
+    color: var(--color-hud-text-dim);
+    font-size: 20px;
+    cursor: pointer;
+    padding: 0;
+    width: 24px;
+    height: 24px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: color 0.2s;
+  }
+
+  .modal-close:hover {
+    color: var(--color-hud-text-bright);
+  }
 }

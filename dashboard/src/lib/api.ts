@@ -1,4 +1,4 @@
-import type { Config, Status } from './types'
+import type { Config, Status, LogEntry } from './types'
 
 function getApiBase(): string {
   return localStorage.getItem('mahoraga_backend_url') || '/agent'
@@ -23,6 +23,17 @@ function authFetch(url: string, options: RequestInit = {}): Promise<Response> {
 interface ApiResult<T> {
   data: T | null
   error: string | null
+}
+
+async function fetchJson<T>(url: string): Promise<ApiResult<T>> {
+  try {
+    const res = await authFetch(url)
+    const json = await res.json()
+    if (json.ok) return { data: json.data, error: null }
+    return { data: null, error: json.error || 'Request failed' }
+  } catch {
+    return { data: null, error: 'Connection failed' }
+  }
 }
 
 export async function fetchStatus(): Promise<ApiResult<Status>> {
@@ -80,4 +91,10 @@ export async function submitSetupKeys(payload: {
   } catch {
     return { data: null, error: 'Failed to connect to agent' }
   }
+}
+
+export async function fetchLogs(
+  limit: number = 1000,
+): Promise<ApiResult<{ logs: LogEntry[] }>> {
+  return fetchJson<{ logs: LogEntry[] }>(`${getApiBase()}/logs?limit=${limit}`)
 }

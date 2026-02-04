@@ -2,23 +2,47 @@
   import Panel from './Panel.svelte'
   import Tooltip from './Tooltip.svelte'
   import LogDetailsTooltip from './LogDetailsTooltip.svelte'
+  import LogsModal from './LogsModal.svelte'
   import { dashboard } from '$lib/stores/dashboard.svelte'
   import { getAgentColor } from '$lib/utils'
   import { autoScroll } from '$lib/actions/autoScroll'
   import { fade } from 'svelte/transition'
 
+  let showLogsModal = $state(false)
+
   function hasDetails(log: any) {
     const { timestamp, agent, action, symbol, ...details } = log
     return Object.keys(details).length > 0
   }
+
+  function openLogsModal() {
+    showLogsModal = true
+  }
+
+  function closeLogsModal() {
+    showLogsModal = false
+  }
 </script>
 
-<Panel title="ACTIVITY FEED" titleRight="LIVE" class="h-80">
-  <div class="overflow-y-auto h-full font-mono text-xs space-y-1" use:autoScroll>
+<div class="hud-panel flex flex-col h-80">
+  <div class="flex justify-between items-center px-4 py-2 border-b border-hud-line shrink-0">
+    <span class="hud-label">ACTIVITY FEED</span>
+    <div class="flex items-center gap-3">
+      <span class="hud-label">LIVE</span>
+      <button
+        class="text-[10px] text-hud-primary hover:text-hud-text-bright transition-colors uppercase tracking-wider cursor-pointer"
+        onclick={openLogsModal}
+      >
+        View All
+      </button>
+    </div>
+  </div>
+  <div class="flex-1 min-h-0 p-3">
+    <div class="overflow-y-auto h-full font-mono text-xs space-y-1" use:autoScroll>
     {#if dashboard.logs.length === 0}
       <div class="text-hud-text-dim py-4 text-center">Waiting for activity...</div>
     {:else}
-      {#each dashboard.logs.slice(-50) as log, i (`${log.timestamp}-${i}`)}
+      {#each dashboard.logs.slice(-200) as log, i (`${log.timestamp}-${i}`)}
         <Tooltip position="right">
           {#snippet children()}
             <div
@@ -44,5 +68,10 @@
         </Tooltip>
       {/each}
     {/if}
+    </div>
   </div>
-</Panel>
+</div>
+
+{#if showLogsModal}
+  <LogsModal onClose={closeLogsModal} />
+{/if}
