@@ -21,11 +21,11 @@
   <div class="research-section grid grid-cols-2 gap-2">
     <div>
       <span class="hud-label text-hud-text-dim block mb-0.5">Confidence</span>
-      <span class="hud-value-sm text-hud-text-bright">{(research.confidence * 100).toFixed(0)}%</span>
+      <span class="hud-value-sm text-hud-text-bright">{research.confidence != null ? (research.confidence * 100).toFixed(0) : 'N/A'}%</span>
     </div>
     <div>
       <span class="hud-label text-hud-text-dim block mb-0.5">Sentiment</span>
-      <span class="hud-value-sm {getSentimentColor(research.sentiment)}">{(research.sentiment * 100).toFixed(0)}%</span>
+      <span class="hud-value-sm {getSentimentColor(research.sentiment)}">{research.sentiment != null ? (research.sentiment * 100).toFixed(0) : 'N/A'}%</span>
     </div>
     <div>
       <span class="hud-label text-hud-text-dim block mb-0.5">Entry Quality</span>

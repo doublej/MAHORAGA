@@ -166,6 +166,7 @@ interface ResearchResult {
   reasoning: string;
   red_flags: string[];
   catalysts: string[];
+  sentiment: number;
   timestamp: number;
 }
 
@@ -668,12 +669,14 @@ export class MahoragaHarness extends DurableObject<Env> {
       // Ignore - will return null
     }
 
-    // Normalize research data to ensure entry_quality exists
+    // Normalize research data to ensure all required fields exist
     const normalizedResearch: Record<string, ResearchResult> = {};
     for (const [symbol, research] of Object.entries(this.state.signalResearch)) {
       normalizedResearch[symbol] = {
         ...research,
-        entry_quality: research.entry_quality || "fair"
+        confidence: research.confidence ?? 0.5,
+        entry_quality: research.entry_quality || "fair",
+        sentiment: research.sentiment ?? 0.5,
       };
     }
 
@@ -1143,6 +1146,7 @@ JSON response:
         reasoning: analysis.reasoning,
         red_flags: analysis.red_flags || [],
         catalysts: analysis.catalysts || [],
+        sentiment,
         timestamp: Date.now(),
       };
 
@@ -1510,6 +1514,7 @@ JSON response:
         reasoning: analysis.reasoning,
         red_flags: analysis.red_flags || [],
         catalysts: analysis.catalysts || [],
+        sentiment: sentimentScore,
         timestamp: Date.now(),
       };
 

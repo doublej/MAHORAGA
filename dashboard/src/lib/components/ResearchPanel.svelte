@@ -76,11 +76,11 @@
                 <div class="space-y-1">
                   <div class="flex justify-between">
                     <span class="text-hud-text-dim">Confidence</span>
-                    <span class="text-hud-text-bright">{(r.confidence * 100).toFixed(0)}%</span>
+                    <span class="text-hud-text-bright">{r.confidence != null ? (r.confidence * 100).toFixed(0) : 'N/A'}%</span>
                   </div>
                   <div class="flex justify-between">
                     <span class="text-hud-text-dim">Sentiment</span>
-                    <span class={getSentimentColor(r.sentiment)}>{(r.sentiment * 100).toFixed(0)}%</span>
+                    <span class={getSentimentColor(r.sentiment)}>{r.sentiment != null ? (r.sentiment * 100).toFixed(0) : 'N/A'}%</span>
                   </div>
                   <div class="flex justify-between">
                     <span class="text-hud-text-dim">Analyzed</span>

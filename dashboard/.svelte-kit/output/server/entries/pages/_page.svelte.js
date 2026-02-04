@@ -667,7 +667,7 @@ function SignalsPanel($$renderer, $$props) {
                 } else {
                   $$renderer4.push("<!--[!-->");
                 }
-                $$renderer4.push(`<!--]--> <span class="hud-value-sm">${escape_html(sig.symbol)}</span> <span${attr_class(`hud-label ${stringify(sig.isCrypto ? "text-hud-warning" : "")}`)}>${escape_html(sig.source.toUpperCase())}</span></div> <div class="flex items-center gap-3">`);
+                $$renderer4.push(`<!--]--> <span class="hud-value-sm">${escape_html(sig.symbol)}</span> <span${attr_class(`hud-label ${stringify(sig.isCrypto ? "text-hud-warning" : "")}`)}>${escape_html(sig.source?.toUpperCase() || "N/A")}</span></div> <div class="flex items-center gap-3">`);
                 if (sig.isCrypto && sig.momentum !== void 0) {
                   $$renderer4.push("<!--[-->");
                   $$renderer4.push(`<span${attr_class(`hud-label hidden sm:inline ${stringify(sig.momentum >= 0 ? "text-hud-success" : "text-hud-error")}`)}>${escape_html(sig.momentum >= 0 ? "+" : "")}${escape_html(sig.momentum.toFixed(1))}%</span>`);
@@ -678,7 +678,7 @@ function SignalsPanel($$renderer, $$props) {
                 $$renderer4.push(`<!--]--> <span${attr_class(`hud-value-sm ${stringify(getSentimentColor(sig.sentiment))}`)}>${escape_html((sig.sentiment * 100).toFixed(0))}%</span></div></div>`);
               }, content = function($$renderer4) {
                 TooltipContent($$renderer4, {
-                  title: `${stringify(sig.symbol)} - ${stringify(sig.source.toUpperCase())}`,
+                  title: `${stringify(sig.symbol)} - ${stringify(sig.source?.toUpperCase() || "N/A")}`,
                   items: [
                     {
                       label: "Sentiment",
@@ -749,7 +749,7 @@ function LogDetailsTooltip($$renderer, $$props) {
     }
     const research = log.symbol && dashboard.status?.signalResearch?.[log.symbol];
     const positionEntry = log.symbol && dashboard.status?.positionEntries?.[log.symbol];
-    $$renderer2.push(`<div class="space-y-2 max-w-md"><div class="font-bold text-hud-primary">${escape_html(log.agent.toUpperCase())} - ${escape_html(log.action.toUpperCase())}</div> <div class="border-t border-hud-line pt-2 space-y-1"><!--[-->`);
+    $$renderer2.push(`<div class="space-y-2 max-w-md"><div class="font-bold text-hud-primary">${escape_html(log.agent?.toUpperCase() || "N/A")} - ${escape_html(log.action?.toUpperCase() || "N/A")}</div> <div class="border-t border-hud-line pt-2 space-y-1"><!--[-->`);
     const each_array = ensure_array_like(Object.entries(details()));
     for (let $$index = 0, $$length = each_array.length; $$index < $$length; $$index++) {
       let [key, value] = each_array[$$index];
@@ -785,58 +785,88 @@ function ActivityFeed($$renderer, $$props) {
       const { timestamp, agent, action, symbol, ...details } = log;
       return Object.keys(details).length > 0;
     }
-    Panel($$renderer2, {
-      title: "ACTIVITY FEED",
-      titleRight: "LIVE",
-      class: "h-80",
-      children: ($$renderer3) => {
-        $$renderer3.push(`<div class="overflow-y-auto h-full font-mono text-xs space-y-1">`);
-        if (dashboard.logs.length === 0) {
-          $$renderer3.push("<!--[-->");
-          $$renderer3.push(`<div class="text-hud-text-dim py-4 text-center">Waiting for activity...</div>`);
-        } else {
-          $$renderer3.push("<!--[!-->");
-          $$renderer3.push(`<!--[-->`);
-          const each_array = ensure_array_like(dashboard.logs.slice(-50));
-          for (let i = 0, $$length = each_array.length; i < $$length; i++) {
-            let log = each_array[i];
-            {
-              let children = function($$renderer4) {
-                $$renderer4.push(`<div class="flex items-start gap-2 py-1 border-b border-hud-line/10 hover:bg-hud-line/5 cursor-help"><span class="text-hud-text-dim shrink-0 hidden sm:inline w-[52px]">${escape_html(new Date(log.timestamp).toLocaleTimeString("en-US", { hour12: false }))}</span> <span${attr_class(`shrink-0 w-[72px] text-right ${stringify(getAgentColor(log.agent))}`)}>${escape_html(log.agent)}</span> <span class="text-hud-text flex-1 text-right wrap-break-word">${escape_html(log.action)} `);
-                if (log.symbol) {
-                  $$renderer4.push("<!--[-->");
-                  $$renderer4.push(`<span class="text-hud-primary ml-1">(${escape_html(log.symbol)})</span>`);
-                } else {
-                  $$renderer4.push("<!--[!-->");
-                }
-                $$renderer4.push(`<!--]--> `);
-                if (hasDetails(log)) {
-                  $$renderer4.push("<!--[-->");
-                  $$renderer4.push(`<span class="text-hud-primary ml-1">•</span>`);
-                } else {
-                  $$renderer4.push("<!--[!-->");
-                }
-                $$renderer4.push(`<!--]--></span></div>`);
-              }, content = function($$renderer4) {
-                LogDetailsTooltip($$renderer4, { log });
-              };
-              Tooltip($$renderer3, {
-                position: "right",
-                children,
-                content
-              });
+    $$renderer2.push(`<div class="hud-panel flex flex-col h-80"><div class="flex justify-between items-center px-4 py-2 border-b border-hud-line shrink-0"><span class="hud-label">ACTIVITY FEED</span> <div class="flex items-center gap-3"><span class="hud-label">LIVE</span> <button class="text-[10px] text-hud-primary hover:text-hud-text-bright transition-colors uppercase tracking-wider cursor-pointer">View All</button></div></div> <div class="flex-1 min-h-0 p-3"><div class="overflow-y-auto h-full font-mono text-xs space-y-1">`);
+    if (dashboard.logs.length === 0) {
+      $$renderer2.push("<!--[-->");
+      $$renderer2.push(`<div class="text-hud-text-dim py-4 text-center">Waiting for activity...</div>`);
+    } else {
+      $$renderer2.push("<!--[!-->");
+      $$renderer2.push(`<!--[-->`);
+      const each_array = ensure_array_like(dashboard.logs.slice(-200));
+      for (let i = 0, $$length = each_array.length; i < $$length; i++) {
+        let log = each_array[i];
+        {
+          let children = function($$renderer3) {
+            $$renderer3.push(`<div class="flex items-start gap-2 py-1 border-b border-hud-line/10 hover:bg-hud-line/5 cursor-help"><span class="text-hud-text-dim shrink-0 hidden sm:inline w-[52px]">${escape_html(new Date(log.timestamp).toLocaleTimeString("en-US", { hour12: false }))}</span> <span${attr_class(`shrink-0 w-[72px] text-right ${stringify(getAgentColor(log.agent))}`)}>${escape_html(log.agent)}</span> <span class="text-hud-text flex-1 text-right wrap-break-word">${escape_html(log.action)} `);
+            if (log.symbol) {
+              $$renderer3.push("<!--[-->");
+              $$renderer3.push(`<span class="text-hud-primary ml-1">(${escape_html(log.symbol)})</span>`);
+            } else {
+              $$renderer3.push("<!--[!-->");
             }
-          }
-          $$renderer3.push(`<!--]-->`);
+            $$renderer3.push(`<!--]--> `);
+            if (hasDetails(log)) {
+              $$renderer3.push("<!--[-->");
+              $$renderer3.push(`<span class="text-hud-primary ml-1">•</span>`);
+            } else {
+              $$renderer3.push("<!--[!-->");
+            }
+            $$renderer3.push(`<!--]--></span></div>`);
+          }, content = function($$renderer3) {
+            LogDetailsTooltip($$renderer3, { log });
+          };
+          Tooltip($$renderer2, {
+            position: "right",
+            children,
+            content
+          });
         }
-        $$renderer3.push(`<!--]--></div>`);
       }
-    });
+      $$renderer2.push(`<!--]-->`);
+    }
+    $$renderer2.push(`<!--]--></div></div></div> `);
+    {
+      $$renderer2.push("<!--[!-->");
+    }
+    $$renderer2.push(`<!--]-->`);
+  });
+}
+function ResearchCardExpanded($$renderer, $$props) {
+  $$renderer.component(($$renderer2) => {
+    let { research } = $$props;
+    $$renderer2.push(`<div class="px-2 pb-2 space-y-3"><div class="research-section"><div class="hud-label text-hud-text-dim mb-1">REASONING</div> <p class="text-xs text-hud-text leading-relaxed">${escape_html(research.reasoning)}</p></div> <div class="research-section grid grid-cols-2 gap-2"><div><span class="hud-label text-hud-text-dim block mb-0.5">Confidence</span> <span class="hud-value-sm text-hud-text-bright">${escape_html((research.confidence * 100).toFixed(0))}%</span></div> <div><span class="hud-label text-hud-text-dim block mb-0.5">Sentiment</span> <span${attr_class(`hud-value-sm ${stringify(getSentimentColor(research.sentiment))}`)}>${escape_html((research.sentiment * 100).toFixed(0))}%</span></div> <div><span class="hud-label text-hud-text-dim block mb-0.5">Entry Quality</span> <span class="hud-value-sm text-hud-text">${escape_html(research.entry_quality?.toUpperCase() || "N/A")}</span></div> <div><span class="hud-label text-hud-text-dim block mb-0.5">Analyzed</span> <span class="hud-value-sm text-hud-text">${escape_html(new Date(research.timestamp).toLocaleTimeString("en-US", { hour12: false }))}</span></div></div> `);
+    if (research.catalysts.length > 0) {
+      $$renderer2.push("<!--[-->");
+      $$renderer2.push(`<div class="research-section"><div class="hud-label text-hud-text-dim mb-2">CATALYSTS</div> <ul class="space-y-1.5"><!--[-->`);
+      const each_array = ensure_array_like(research.catalysts);
+      for (let $$index = 0, $$length = each_array.length; $$index < $$length; $$index++) {
+        let catalyst = each_array[$$index];
+        $$renderer2.push(`<li class="flex items-start gap-2"><span class="text-hud-success shrink-0 mt-0.5">+</span> <span class="text-xs text-hud-success leading-relaxed">${escape_html(catalyst)}</span></li>`);
+      }
+      $$renderer2.push(`<!--]--></ul></div>`);
+    } else {
+      $$renderer2.push("<!--[!-->");
+    }
+    $$renderer2.push(`<!--]--> `);
+    if (research.red_flags.length > 0) {
+      $$renderer2.push("<!--[-->");
+      $$renderer2.push(`<div class="research-section"><div class="hud-label text-hud-text-dim mb-2">RED FLAGS</div> <ul class="space-y-1.5"><!--[-->`);
+      const each_array_1 = ensure_array_like(research.red_flags);
+      for (let $$index_1 = 0, $$length = each_array_1.length; $$index_1 < $$length; $$index_1++) {
+        let flag = each_array_1[$$index_1];
+        $$renderer2.push(`<li class="flex items-start gap-2"><span class="text-hud-error shrink-0 mt-0.5">−</span> <span class="text-xs text-hud-error leading-relaxed">${escape_html(flag)}</span></li>`);
+      }
+      $$renderer2.push(`<!--]--></ul></div>`);
+    } else {
+      $$renderer2.push("<!--[!-->");
+    }
+    $$renderer2.push(`<!--]--></div>`);
   });
 }
 function ResearchPanel($$renderer, $$props) {
   $$renderer.component(($$renderer2) => {
     let researchEntries = Object.entries(dashboard.status?.signalResearch || {});
+    let expandedSymbol = null;
     Panel($$renderer2, {
       title: "SIGNAL RESEARCH",
       titleRight: researchEntries.length.toString(),
@@ -853,18 +883,30 @@ function ResearchPanel($$renderer, $$props) {
           for (let $$index_3 = 0, $$length = each_array.length; $$index_3 < $$length; $$index_3++) {
             let [symbol, research] = each_array[$$index_3];
             const r = research;
+            const isExpanded = expandedSymbol === symbol;
+            $$renderer3.push(`<div${attr_class("border border-hud-line/30 rounded transition-all duration-200", void 0, {
+              "research-card-expanded": isExpanded,
+              "research-card-collapsed": !isExpanded
+            })}>`);
             {
               let children = function($$renderer4) {
-                $$renderer4.push(`<div class="p-2 border border-hud-line/30 rounded hover:border-hud-line/60 cursor-help transition-colors"><div class="flex justify-between items-center mb-1"><span class="hud-value-sm">${escape_html(symbol)}</span> <div class="flex items-center gap-2"><span${attr_class(`hud-label ${stringify(getQualityColor(r.entry_quality))}`)}>${escape_html(r.entry_quality.toUpperCase())}</span> <span${attr_class(`hud-value-sm font-bold ${stringify(getVerdictColor(r.verdict))}`)}>${escape_html(r.verdict)}</span></div></div> <p class="text-xs text-hud-text-dim leading-tight mb-1">${escape_html(r.reasoning)}</p> `);
-                if (r.red_flags.length > 0) {
+                $$renderer4.push(`<div class="p-2 cursor-pointer" role="button" tabindex="0"${attr("aria-expanded", isExpanded)}><div class="flex justify-between items-center mb-1"><div class="flex items-center gap-2"><span class="hud-value-sm">${escape_html(symbol)}</span> <span class="text-hud-text-dim text-xs">${escape_html(isExpanded ? "⌃" : "⌄")}</span></div> <div class="flex items-center gap-2"><span${attr_class(`hud-label ${stringify(getQualityColor(r.entry_quality))}`)}>${escape_html(r.entry_quality?.toUpperCase() || "N/A")}</span> <span${attr_class(`hud-value-sm font-bold ${stringify(getVerdictColor(r.verdict))}`)}>${escape_html(r.verdict)}</span></div></div> `);
+                if (!isExpanded) {
                   $$renderer4.push("<!--[-->");
-                  $$renderer4.push(`<div class="flex flex-wrap gap-1"><!--[-->`);
-                  const each_array_1 = ensure_array_like(r.red_flags.slice(0, 2));
-                  for (let $$index = 0, $$length2 = each_array_1.length; $$index < $$length2; $$index++) {
-                    let flag = each_array_1[$$index];
-                    $$renderer4.push(`<span class="text-xs text-hud-error bg-hud-error/10 px-1 rounded">${escape_html(flag.slice(0, 30))}...</span>`);
+                  $$renderer4.push(`<p class="text-xs text-hud-text-dim leading-tight mb-1">${escape_html(r.reasoning)}</p> `);
+                  if (r.red_flags.length > 0) {
+                    $$renderer4.push("<!--[-->");
+                    $$renderer4.push(`<div class="flex flex-wrap gap-1"><!--[-->`);
+                    const each_array_1 = ensure_array_like(r.red_flags.slice(0, 2));
+                    for (let $$index = 0, $$length2 = each_array_1.length; $$index < $$length2; $$index++) {
+                      let flag = each_array_1[$$index];
+                      $$renderer4.push(`<span class="text-xs text-hud-error bg-hud-error/10 px-1 rounded">${escape_html(flag.slice(0, 30))}...</span>`);
+                    }
+                    $$renderer4.push(`<!--]--></div>`);
+                  } else {
+                    $$renderer4.push("<!--[!-->");
                   }
-                  $$renderer4.push(`<!--]--></div>`);
+                  $$renderer4.push(`<!--]-->`);
                 } else {
                   $$renderer4.push("<!--[!-->");
                 }
@@ -904,6 +946,16 @@ function ResearchPanel($$renderer, $$props) {
                 content
               });
             }
+            $$renderer3.push(`<!----> `);
+            if (isExpanded) {
+              $$renderer3.push("<!--[-->");
+              $$renderer3.push(`<div>`);
+              ResearchCardExpanded($$renderer3, { research: r });
+              $$renderer3.push(`<!----></div>`);
+            } else {
+              $$renderer3.push("<!--[!-->");
+            }
+            $$renderer3.push(`<!--]--></div>`);
           }
           $$renderer3.push(`<!--]-->`);
         }

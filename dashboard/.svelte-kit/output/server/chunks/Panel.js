@@ -14,6 +14,16 @@ function authFetch(url, options = {}) {
   if (!headers.has("Content-Type") && options.body) headers.set("Content-Type", "application/json");
   return fetch(url, { ...options, headers });
 }
+async function fetchJson(url) {
+  try {
+    const res = await authFetch(url);
+    const json = await res.json();
+    if (json.ok) return { data: json.data, error: null };
+    return { data: null, error: json.error || "Request failed" };
+  } catch {
+    return { data: null, error: "Connection failed" };
+  }
+}
 async function fetchStatus() {
   try {
     const res = await authFetch(`${getApiBase()}/status`);
@@ -46,6 +56,9 @@ async function saveConfig(config) {
   } catch {
     return { data: null, error: "Connection failed" };
   }
+}
+async function fetchLogs(limit = 1e3) {
+  return fetchJson(`${getApiBase()}/logs?limit=${limit}`);
 }
 function generateMockPortfolioHistory(equity, points = 24) {
   const history = [];
@@ -92,6 +105,8 @@ class DashboardStore {
   setupChecked = false;
   time = /* @__PURE__ */ new Date();
   portfolioHistory = [];
+  fullLogs = [];
+  logFilters = {};
   pollInterval = null;
   timeInterval = null;
   priceHistoryCache = {};
@@ -165,6 +180,14 @@ class DashboardStore {
       };
     }).filter((s) => s !== null);
   }
+  get filteredLogs() {
+    return this.fullLogs.filter((log) => {
+      if (this.logFilters.agent && log.agent !== this.logFilters.agent) return false;
+      if (this.logFilters.action && log.action !== this.logFilters.action) return false;
+      if (this.logFilters.symbol && !log.symbol?.toLowerCase().includes(this.logFilters.symbol.toLowerCase())) return false;
+      return true;
+    });
+  }
   async checkSetup() {
     const { data } = await fetchSetupStatus();
     if (data && !data.configured) this.showSetup = true;
@@ -178,6 +201,12 @@ class DashboardStore {
       this.updatePortfolioHistory(data);
     } else if (error) {
       this.error = error;
+    }
+  }
+  async fetchFullLogs(limit = 1e3) {
+    const { data } = await fetchLogs(limit);
+    if (data) {
+      this.fullLogs = data.logs;
     }
   }
   updatePortfolioHistory(data) {
