@@ -2556,7 +2556,7 @@ export function getHarnessStub(env: Env): DurableObjectStub {
   if (!env.MAHORAGA_HARNESS) {
     throw new Error("MAHORAGA_HARNESS binding not configured - check wrangler.toml");
   }
-  const id = env.MAHORAGA_HARNESS.idFromName("main");
+  const id = env.MAHORAGA_HARNESS.idFromName("main-us");
   return env.MAHORAGA_HARNESS.get(id, { locationHint: "wnam" });
 }
 

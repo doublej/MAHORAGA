@@ -9,6 +9,7 @@
 .env
 .env.*
 !.env.example
+.mcp.json
 
 # Agent runtime files (contain personal trading data)
 agent-config.json
@@ -87,3 +88,4 @@ coverage/
 *.bak
 *.tmp
 *.temp
+.aider*

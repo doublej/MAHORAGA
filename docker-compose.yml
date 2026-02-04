@@ -1,0 +1,21 @@
+services:
+  mahoraga:
+    build: .
+    ports:
+      - "8787:8787"
+      - "3000:3000"
+    # Wrangler picks up env vars directly — no .dev.vars needed inside the container
+    env_file: .env
+    volumes:
+      # Persist local D1/KV/DO state between runs
+      - ./.wrangler:/app/.wrangler
+      # Keep migrations in sync with host
+      - ./migrations:/app/migrations
+      # Dashboard source for HMR
+      - ./dashboard/src:/app/dashboard/src
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8787/health"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 10s

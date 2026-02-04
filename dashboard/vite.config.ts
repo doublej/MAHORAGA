@@ -1,18 +1,17 @@
-import { defineConfig } from 'vite'
-import react from '@vitejs/plugin-react'
+import { sveltekit } from '@sveltejs/kit/vite'
 import tailwindcss from '@tailwindcss/vite'
+import { defineConfig } from 'vite'
 
 const wranglerPort = process.env.WRANGLER_PORT || '8787'
 
 export default defineConfig({
-  plugins: [react(), tailwindcss()],
+  plugins: [sveltekit(), tailwindcss()],
   server: {
     port: 3000,
     proxy: {
-      '/api': {
+      '/agent': {
         target: `http://localhost:${wranglerPort}`,
         changeOrigin: true,
-        rewrite: (path) => path.replace(/^\/api/, '/agent'),
       },
     },
   },
