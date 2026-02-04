@@ -59,7 +59,7 @@
                 </div>
 
                 {#if !isExpanded}
-                  <p class="text-xs text-hud-text-dim leading-tight mb-1">{r.reasoning}</p>
+                  <p class="text-xs text-hud-text-dim leading-tight mb-1 line-clamp-2 break-words">{r.reasoning}</p>
                   {#if r.red_flags.length > 0}
                     <div class="flex flex-wrap gap-1">
                       {#each r.red_flags.slice(0, 2) as flag}

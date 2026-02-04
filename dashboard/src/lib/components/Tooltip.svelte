@@ -7,11 +7,13 @@
     content,
     position = 'top',
     delay = 200,
+    disabled = false,
   }: {
     children: Snippet
     content: Snippet
     position?: 'top' | 'bottom' | 'left' | 'right'
     delay?: number
+    disabled?: boolean
   } = $props()
 
   let visible = $state(false)
@@ -53,6 +55,7 @@
   }
 
   function show() {
+    if (disabled) return
     timeout = setTimeout(() => {
       calculatePosition()
       visible = true
@@ -63,6 +66,13 @@
     if (timeout) clearTimeout(timeout)
     visible = false
   }
+
+  $effect(() => {
+    if (disabled && visible) {
+      if (timeout) clearTimeout(timeout)
+      visible = false
+    }
+  })
 </script>
 
 <!-- svelte-ignore a11y_no_static_element_interactions -->
