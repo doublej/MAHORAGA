@@ -93,6 +93,10 @@
     "command": "cd dashboard && npm run build"
   },
 
+  "placement": {
+    "mode": "smart"
+  },
+
   "dev": {
     "port": 8787
   }
