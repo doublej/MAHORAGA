@@ -276,7 +276,7 @@ export interface NewsProvider {
   search(query: string, limit?: number): Promise<NewsItem[]>;
 }
 
-export type ReasoningEffort = "low" | "medium" | "high";
+export type ReasoningEffort = "minimal" | "low" | "medium" | "high";
 
 export interface CompletionParams {
   model?: string;

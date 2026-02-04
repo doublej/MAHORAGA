@@ -102,3 +102,32 @@ export function sanitizeForLog(obj: unknown): unknown {
   }
   return result;
 }
+
+export function validateRequiredFields<T extends Record<string, unknown>>(
+  obj: unknown,
+  requiredFields: string[],
+  context: { operation: string; symbol?: string; content: string }
+): T {
+  if (!obj || typeof obj !== "object") {
+    throw new Error(
+      `${context.operation} validation failed${context.symbol ? ` for ${context.symbol}` : ""}: ` +
+      `Expected object, got ${typeof obj}. Content preview: ${truncate(context.content, 100)}`
+    );
+  }
+
+  const missing: string[] = [];
+  for (const field of requiredFields) {
+    if (!(field in obj) || (obj as Record<string, unknown>)[field] === undefined) {
+      missing.push(field);
+    }
+  }
+
+  if (missing.length > 0) {
+    throw new Error(
+      `${context.operation} validation failed${context.symbol ? ` for ${context.symbol}` : ""}: ` +
+      `Missing required fields: ${missing.join(", ")}. Content preview: ${truncate(context.content, 100)}`
+    );
+  }
+
+  return obj as T;
+}

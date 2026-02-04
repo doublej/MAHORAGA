@@ -84,7 +84,10 @@ export class ClaudeProvider implements LLMProvider {
       if (block.type === "text") return block.text;
     }
 
-    return "";
+    throw createError(
+      ErrorCode.PROVIDER_ERROR,
+      "LLM response contained no valid content blocks"
+    );
   }
 }
 

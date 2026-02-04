@@ -40,6 +40,7 @@ import type { Env } from "../env.d";
 import { createAlpacaProviders } from "../providers/alpaca";
 import type { Account, Position, MarketClock, LLMProvider } from "../providers/types";
 import { createLLMProvider } from "../providers/llm/factory";
+import { truncate, validateRequiredFields } from "../lib/utils";
 
 // ============================================================================
 // SECTION 1: TYPES & CONFIGURATION
@@ -1142,21 +1143,37 @@ JSON response:
 
       this.trackLLMCost(this.state.config.llm_model, response.usage.prompt_tokens, response.usage.completion_tokens);
 
-      const content = response.content || "{}";
-      const analysis = JSON.parse(content.replace(/```json\n?|```/g, "").trim()) as {
+      let parsed: unknown;
+      try {
+        const cleanContent = response.content.replace(/```json\n?|```/g, "").trim();
+        parsed = JSON.parse(cleanContent);
+      } catch (parseError) {
+        this.log("Crypto", "parse_error", {
+          symbol,
+          error: String(parseError),
+          contentPreview: truncate(response.content, 100)
+        });
+        return null;
+      }
+
+      const analysis = validateRequiredFields<{
         verdict: "BUY" | "SKIP" | "WAIT";
         confidence: number;
         entry_quality: "excellent" | "good" | "fair" | "poor";
         reasoning: string;
         red_flags: string[];
         catalysts: string[];
-      };
+      }>(parsed, ["verdict", "confidence", "entry_quality", "reasoning"], {
+        operation: "researchCrypto",
+        symbol,
+        content: response.content
+      });
 
       const result: ResearchResult = {
         symbol,
         verdict: analysis.verdict,
         confidence: analysis.confidence,
-        entry_quality: analysis.entry_quality || "fair",
+        entry_quality: analysis.entry_quality,
         reasoning: analysis.reasoning,
         red_flags: analysis.red_flags || [],
         catalysts: analysis.catalysts || [],
@@ -1174,7 +1191,11 @@ JSON response:
 
       return result;
     } catch (error) {
-      this.log("Crypto", "research_error", { symbol, error: String(error) });
+      this.log("Crypto", "research_error", {
+        symbol,
+        error: String(error),
+        errorType: error instanceof Error ? error.constructor.name : typeof error
+      });
       return null;
     }
   }
@@ -1510,21 +1531,37 @@ JSON response:
 
       this.trackLLMCost(this.state.config.llm_model, response.usage.prompt_tokens, response.usage.completion_tokens);
 
-      const content = response.content || "{}";
-      const analysis = JSON.parse(content.replace(/```json\n?|```/g, "").trim()) as {
+      let parsed: unknown;
+      try {
+        const cleanContent = response.content.replace(/```json\n?|```/g, "").trim();
+        parsed = JSON.parse(cleanContent);
+      } catch (parseError) {
+        this.log("SignalResearch", "parse_error", {
+          symbol,
+          error: String(parseError),
+          contentPreview: truncate(response.content, 100)
+        });
+        return null;
+      }
+
+      const analysis = validateRequiredFields<{
         verdict: "BUY" | "SKIP" | "WAIT";
         confidence: number;
         entry_quality: "excellent" | "good" | "fair" | "poor";
         reasoning: string;
         red_flags: string[];
         catalysts: string[];
-      };
+      }>(parsed, ["verdict", "confidence", "entry_quality", "reasoning"], {
+        operation: "researchSignal",
+        symbol,
+        content: response.content
+      });
 
       const result: ResearchResult = {
         symbol,
         verdict: analysis.verdict,
         confidence: analysis.confidence,
-        entry_quality: analysis.entry_quality || "fair",
+        entry_quality: analysis.entry_quality,
         reasoning: analysis.reasoning,
         red_flags: analysis.red_flags || [],
         catalysts: analysis.catalysts || [],
@@ -1556,7 +1593,11 @@ JSON response:
 
       return result;
     } catch (error) {
-      this.log("SignalResearch", "error", { symbol, message: String(error) });
+      this.log("SignalResearch", "error", {
+        symbol,
+        message: String(error),
+        errorType: error instanceof Error ? error.constructor.name : typeof error
+      });
       return null;
     }
   }
@@ -1646,13 +1687,29 @@ Provide a brief risk assessment and recommendation (HOLD, SELL, or ADD). JSON fo
 
       this.trackLLMCost(this.state.config.llm_model, result.usage.prompt_tokens, result.usage.completion_tokens);
 
-      const content = result.content || "{}";
-      const analysis = JSON.parse(content.replace(/```json\n?|```/g, "").trim()) as {
+      let parsed: unknown;
+      try {
+        const cleanContent = result.content.replace(/```json\n?|```/g, "").trim();
+        parsed = JSON.parse(cleanContent);
+      } catch (parseError) {
+        this.log("PositionResearch", "parse_error", {
+          symbol,
+          error: String(parseError),
+          contentPreview: truncate(result.content, 100)
+        });
+        return null;
+      }
+
+      const analysis = validateRequiredFields<{
         recommendation: "HOLD" | "SELL" | "ADD";
         risk_level: "low" | "medium" | "high";
         reasoning: string;
         key_factors: string[];
-      };
+      }>(parsed, ["recommendation", "risk_level", "reasoning"], {
+        operation: "researchPosition",
+        symbol,
+        content: result.content
+      });
 
       this.state.positionResearch[symbol] = { ...analysis, timestamp: Date.now() };
       this.log("PositionResearch", "position_analyzed", {
@@ -1663,7 +1720,11 @@ Provide a brief risk assessment and recommendation (HOLD, SELL, or ADD). JSON fo
 
       return analysis;
     } catch (error) {
-      this.log("PositionResearch", "error", { symbol, message: String(error) });
+      this.log("PositionResearch", "error", {
+        symbol,
+        message: String(error),
+        errorType: error instanceof Error ? error.constructor.name : typeof error
+      });
       return null;
     }
   }
@@ -1771,8 +1832,19 @@ Response format:
 
       this.trackLLMCost(this.state.config.llm_analyst_model, result.usage.prompt_tokens, result.usage.completion_tokens);
 
-      const content = result.content || "{}";
-      const analysis = JSON.parse(content.replace(/```json\n?|```/g, "").trim()) as {
+      let parsed: unknown;
+      try {
+        const cleanContent = result.content.replace(/```json\n?|```/g, "").trim();
+        parsed = JSON.parse(cleanContent);
+      } catch (parseError) {
+        this.log("Analyst", "parse_error", {
+          error: String(parseError),
+          contentPreview: truncate(result.content, 100)
+        });
+        return { recommendations: [], market_summary: "Analysis failed: JSON parse error", high_conviction: [] };
+      }
+
+      const analysis = validateRequiredFields<{
         recommendations: Array<{
           action: "BUY" | "SELL" | "HOLD";
           symbol: string;
@@ -1782,7 +1854,10 @@ Response format:
         }>;
         market_summary: string;
         high_conviction_plays?: string[];
-      };
+      }>(parsed, ["recommendations", "market_summary"], {
+        operation: "analyzeSignalsWithLLM",
+        content: result.content
+      });
 
       this.log("Analyst", "analysis_complete", {
         candidates: candidates.length,
@@ -1795,7 +1870,10 @@ Response format:
         high_conviction: analysis.high_conviction_plays || [],
       };
     } catch (error) {
-      this.log("Analyst", "error", { message: String(error) });
+      this.log("Analyst", "error", {
+        message: String(error),
+        errorType: error instanceof Error ? error.constructor.name : typeof error
+      });
       return { recommendations: [], market_summary: `Analysis failed: ${error}`, high_conviction: [] };
     }
   }
@@ -2448,14 +2526,34 @@ Response format:
   }
 
   public trackLLMCost(model: string, tokensIn: number, tokensOut: number): number {
-    const pricing: Record<string, { input: number; output: number }> = {
-      "claude-haiku-4-20250414": { input: 0.80, output: 4.0 },
-      "claude-sonnet-4-20250514": { input: 3.0, output: 15.0 },
-      "gpt-4o": { input: 2.5, output: 10 },
-      "gpt-4o-mini": { input: 0.15, output: 0.6 },
-    };
+    const pricingByPrefix: Array<{ prefix: string; input: number; output: number }> = [
+      { prefix: "gpt-5.2-pro", input: 21.0, output: 168.0 },
+      { prefix: "gpt-5-pro", input: 15.0, output: 120.0 },
+      { prefix: "gpt-5.2", input: 1.75, output: 14.0 },
+      { prefix: "gpt-5.1-codex-mini", input: 0.25, output: 2.0 },
+      { prefix: "gpt-5.1", input: 1.25, output: 10.0 },
+      { prefix: "gpt-5-mini", input: 0.25, output: 2.0 },
+      { prefix: "gpt-5-nano", input: 0.05, output: 0.4 },
+      { prefix: "gpt-5", input: 1.25, output: 10.0 },
+      { prefix: "gpt-4.1-mini", input: 0.4, output: 1.6 },
+      { prefix: "gpt-4.1-nano", input: 0.1, output: 0.4 },
+      { prefix: "gpt-4.1", input: 2.0, output: 8.0 },
+      { prefix: "gpt-4o-mini", input: 0.15, output: 0.6 },
+      { prefix: "gpt-4o", input: 2.5, output: 10.0 },
+      { prefix: "o1-pro", input: 150.0, output: 600.0 },
+      { prefix: "o1-mini", input: 1.1, output: 4.4 },
+      { prefix: "o1", input: 15.0, output: 60.0 },
+      { prefix: "o3-mini", input: 1.1, output: 4.4 },
+      { prefix: "o3", input: 2.0, output: 8.0 },
+      { prefix: "o4-mini", input: 1.1, output: 4.4 },
+      { prefix: "claude-sonnet-4-20250514", input: 3.0, output: 15.0 },
+      { prefix: "claude-haiku-4-20250414", input: 0.8, output: 4.0 },
+    ];
 
-    const rates = pricing[model] ?? pricing["claude-haiku-4-20250414"]!;
+    const match = pricingByPrefix.find(
+      (entry) => model === entry.prefix || model.startsWith(`${entry.prefix}-`)
+    );
+    const rates = match ?? pricingByPrefix[pricingByPrefix.length - 1]!;
     const cost = (tokensIn * rates.input + tokensOut * rates.output) / 1_000_000;
     
     this.state.costTracker.total_usd += cost;
