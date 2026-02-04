@@ -36,7 +36,7 @@
 
 <div class="space-y-2 max-w-md">
   <div class="font-bold text-hud-primary">
-    {log.agent.toUpperCase()} - {log.action.toUpperCase()}
+    {log.agent?.toUpperCase() || 'N/A'} - {log.action?.toUpperCase() || 'N/A'}
   </div>
 
   <div class="border-t border-hud-line pt-2 space-y-1">

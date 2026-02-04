@@ -53,7 +53,7 @@
                     <span class="text-hud-text-dim text-xs">{isExpanded ? '⌃' : '⌄'}</span>
                   </div>
                   <div class="flex items-center gap-2">
-                    <span class="hud-label {getQualityColor(r.entry_quality)}">{r.entry_quality.toUpperCase()}</span>
+                    <span class="hud-label {getQualityColor(r.entry_quality)}">{r.entry_quality?.toUpperCase() || 'N/A'}</span>
                     <span class="hud-value-sm font-bold {getVerdictColor(r.verdict)}">{r.verdict}</span>
                   </div>
                 </div>

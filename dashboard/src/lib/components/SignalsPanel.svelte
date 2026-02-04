@@ -22,7 +22,7 @@
               <div class="flex items-center gap-2">
                 {#if sig.isCrypto}<span class="text-hud-warning text-xs">₿</span>{/if}
                 <span class="hud-value-sm">{sig.symbol}</span>
-                <span class="hud-label {sig.isCrypto ? 'text-hud-warning' : ''}">{sig.source.toUpperCase()}</span>
+                <span class="hud-label {sig.isCrypto ? 'text-hud-warning' : ''}">{sig.source?.toUpperCase() || 'N/A'}</span>
               </div>
               <div class="flex items-center gap-3">
                 {#if sig.isCrypto && sig.momentum !== undefined}
@@ -40,7 +40,7 @@
           {/snippet}
           {#snippet content()}
             <TooltipContent
-              title="{sig.symbol} - {sig.source.toUpperCase()}"
+              title="{sig.symbol} - {sig.source?.toUpperCase() || 'N/A'}"
               items={[
                 { label: 'Sentiment', value: `${(sig.sentiment * 100).toFixed(0)}%`, color: getSentimentColor(sig.sentiment) },
                 { label: 'Volume', value: sig.volume },

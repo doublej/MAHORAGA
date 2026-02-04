@@ -29,7 +29,7 @@
     </div>
     <div>
       <span class="hud-label text-hud-text-dim block mb-0.5">Entry Quality</span>
-      <span class="hud-value-sm text-hud-text">{research.entry_quality.toUpperCase()}</span>
+      <span class="hud-value-sm text-hud-text">{research.entry_quality?.toUpperCase() || 'N/A'}</span>
     </div>
     <div>
       <span class="hud-label text-hud-text-dim block mb-0.5">Analyzed</span>
