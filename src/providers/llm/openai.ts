@@ -106,6 +106,18 @@ function buildResponsesInput(
   });
 }
 
+const MAX_RETRIES = 2;
+const RETRY_DELAY_MS = 1000;
+
+async function sleep(ms: number): Promise<void> {
+  return new Promise(resolve => setTimeout(resolve, ms));
+}
+
+function isRetryableError(error: unknown): boolean {
+  const msg = String(error).toLowerCase();
+  return msg.includes('empty content') || msg.includes('rate limit') || msg.includes('timeout');
+}
+
 function extractResponsesText(data: OpenAIResponsesResponse): string {
   // Check response status - only "completed" has valid output
   if (data.status && data.status !== 'completed') {
@@ -142,11 +154,25 @@ export class OpenAIProvider implements LLMProvider {
 
   async complete(params: CompletionParams): Promise<CompletionResult> {
     const model = params.model ?? this.model;
-    if (shouldUseResponses(model)) {
-      return this.completeWithResponses(model, params);
+    let lastError: unknown;
+
+    for (let attempt = 0; attempt <= MAX_RETRIES; attempt++) {
+      try {
+        if (shouldUseResponses(model)) {
+          return await this.completeWithResponses(model, params);
+        }
+        return await this.completeWithChatCompletions(model, params);
+      } catch (error) {
+        lastError = error;
+        if (attempt < MAX_RETRIES && isRetryableError(error)) {
+          await sleep(RETRY_DELAY_MS * (attempt + 1));
+          continue;
+        }
+        throw error;
+      }
     }
 
-    return this.completeWithChatCompletions(model, params);
+    throw lastError;
   }
 
   private async completeWithResponses(
