@@ -12,7 +12,7 @@ interface OpenAIChatResponse {
   choices: Array<{
     message: {
       role: string;
-      content: string;
+      content: string | null;
     };
     finish_reason: string;
   }>;
@@ -41,6 +41,7 @@ interface OpenAIResponsesResponse {
   output?: OpenAIResponsesOutputItem[];
   output_text?: string;
   error?: { message?: string; code?: string };
+  incomplete_details?: { reason?: string };
   usage?: {
     input_tokens?: number;
     output_tokens?: number;
@@ -108,8 +109,11 @@ function buildResponsesInput(
 function extractResponsesText(data: OpenAIResponsesResponse): string {
   // Check response status - only "completed" has valid output
   if (data.status && data.status !== 'completed') {
-    const errMsg = data.error?.message || `response status: ${data.status}`;
-    throw createError(ErrorCode.PROVIDER_ERROR, `OpenAI Responses API: ${errMsg}`);
+    const reason = data.incomplete_details?.reason || data.error?.message || 'unknown';
+    throw createError(
+      ErrorCode.PROVIDER_ERROR,
+      `OpenAI Responses API: status=${data.status}, reason=${reason}`
+    );
   }
 
   if (data.output_text) return data.output_text;
@@ -258,9 +262,14 @@ export class OpenAIProvider implements LLMProvider {
 
     const data = (await response.json()) as OpenAIChatResponse;
 
-    const content = data.choices[0]?.message?.content;
+    const choice = data.choices[0];
+    const content = choice?.message?.content;
     if (!content) {
-      throw createError(ErrorCode.PROVIDER_ERROR, 'OpenAI Chat Completions returned empty content');
+      const reason = choice?.finish_reason || 'no_choice';
+      throw createError(
+        ErrorCode.PROVIDER_ERROR,
+        `OpenAI Chat Completions returned empty content (finish_reason=${reason})`
+      );
     }
 
     return {
