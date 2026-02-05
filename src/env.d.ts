@@ -12,7 +12,9 @@ export interface Env {
   LLM_MODEL?: string;
   TWITTER_BEARER_TOKEN?: string;
   DISCORD_WEBHOOK_URL?: string;
-  MAHORAGA_API_TOKEN: string;
+  MAHORAGA_API_TOKEN?: string;
+  CLOUDFLARE_ACCESS_AUD?: string;
+  CF_ACCESS_AUD?: string;
   KILL_SWITCH_SECRET: string;
 
   ENVIRONMENT: string;

@@ -5,8 +5,9 @@
   let config = $derived(dashboard.config)
 </script>
 
-<footer class="mt-4 pt-3 border-t border-hud-line flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
-  <div class="flex flex-wrap gap-4 md:gap-6">
+<footer class="mt-4 pt-3 border-t border-hud-line flex flex-col lg:flex-row justify-between items-start lg:items-center gap-3">
+  <div class="w-full overflow-x-auto pb-1">
+    <div class="flex flex-nowrap lg:flex-wrap gap-4 md:gap-6 min-w-max">
     {#if config}
       <MetricInline label="MAX POS" value="${config.max_position_value}" />
       <MetricInline label="MIN SENT" value="{(config.min_sentiment_score * 100).toFixed(0)}%" />
@@ -32,8 +33,9 @@
         <MetricInline label="SYMBOLS" value={(config.crypto_symbols || ['BTC', 'ETH', 'SOL']).map(s => s.split('/')[0]).join('/')} />
       {/if}
     {/if}
+    </div>
   </div>
-  <div class="flex items-center gap-4">
+  <div class="flex items-center gap-3 sm:gap-4 shrink-0">
     <span class="hud-label hidden md:inline">AUTONOMOUS TRADING SYSTEM</span>
     <span class="hud-value-sm">PAPER MODE</span>
   </div>

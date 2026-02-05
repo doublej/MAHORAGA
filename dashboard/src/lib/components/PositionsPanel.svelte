@@ -12,15 +12,15 @@
   {#if dashboard.positions.length === 0}
     <div class="text-hud-text-dim text-sm py-8 text-center">No open positions</div>
   {:else}
-    <div class="overflow-x-auto">
+    <div class="overflow-x-auto -mx-2 px-2">
       <table class="w-full">
         <thead>
           <tr class="border-b border-hud-line/50">
             <th class="hud-label text-left py-2 px-2">Symbol</th>
-            <th class="hud-label text-right py-2 px-2 hidden sm:table-cell">Qty</th>
+            <th class="hud-label text-right py-2 px-2">Qty</th>
             <th class="hud-label text-right py-2 px-2 hidden md:table-cell">Value</th>
             <th class="hud-label text-right py-2 px-2">P&L</th>
-            <th class="hud-label text-center py-2 px-2">Trend</th>
+            <th class="hud-label text-center py-2 px-2 hidden sm:table-cell">Trend</th>
           </tr>
         </thead>
         <tbody>
@@ -59,13 +59,13 @@
                   {/snippet}
                 </Tooltip>
               </td>
-              <td class="hud-value-sm hud-nums text-right py-2 px-2 hidden sm:table-cell">{pos.qty}</td>
+              <td class="hud-value-sm hud-nums text-right py-2 px-2">{pos.qty}</td>
               <td class="hud-value-sm hud-nums text-right py-2 px-2 hidden md:table-cell">{formatCurrency(pos.market_value)}</td>
               <td class="hud-value-sm hud-nums text-right py-2 px-2 {pos.unrealized_pl >= 0 ? 'text-hud-success' : 'text-hud-error'}">
                 <div class="hud-nums">{formatCurrency(pos.unrealized_pl)}</div>
                 <div class="text-xs opacity-70 hud-nums">{formatPercent(plPct)}</div>
               </td>
-              <td class="py-2 px-2">
+              <td class="py-2 px-2 hidden sm:table-cell">
                 <div class="flex justify-center">
                   <Sparkline data={priceHistory} width={60} height={20} />
                 </div>

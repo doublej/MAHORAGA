@@ -122,7 +122,7 @@
             </p>
           </div>
           <div>
-            <label class="hud-label block mb-1">API Token</label>
+            <label class="hud-label block mb-1">API Token (Optional)</label>
             <input
               type="password"
               class="hud-input w-full"
@@ -130,7 +130,7 @@
               placeholder="Enter MAHORAGA_API_TOKEN"
             />
             <p class="text-[9px] text-hud-text-dim mt-1">
-              Your MAHORAGA_API_TOKEN from Cloudflare secrets. Required for all API access.
+              Use this for bearer auth, or leave empty and authenticate through Cloudflare Access.
             </p>
           </div>
           <div class="flex items-center gap-4">

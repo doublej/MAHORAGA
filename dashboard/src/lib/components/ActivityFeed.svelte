@@ -1,15 +1,15 @@
 <script lang="ts">
-  import Panel from './Panel.svelte'
-  import Tooltip from './Tooltip.svelte'
   import LogDetailsTooltip from './LogDetailsTooltip.svelte'
   import LogsModal from './LogsModal.svelte'
+  import DetailWindow from './DetailWindow.svelte'
   import { dashboard } from '$lib/stores/dashboard.svelte'
-  import { getAgentColor } from '$lib/utils'
-  import { formatCurrency } from '$lib/utils'
+  import { getAgentColor, formatCurrency } from '$lib/utils'
   import { autoScroll } from '$lib/actions/autoScroll'
   import { fade } from 'svelte/transition'
 
   let showLogsModal = $state(false)
+  let selectedLog = $state<any | null>(null)
+  let detailsMinimized = $state(false)
 
   const detailOrder = [
     'symbol',
@@ -110,6 +110,25 @@
     showLogsModal = false
   }
 
+  function openDetails(log: any) {
+    selectedLog = log
+    detailsMinimized = false
+  }
+
+  function closeDetails() {
+    selectedLog = null
+    detailsMinimized = false
+  }
+
+  function minimizeDetails() {
+    if (!selectedLog) return
+    detailsMinimized = true
+  }
+
+  function restoreDetails() {
+    detailsMinimized = false
+  }
+
   const activitySummary = $derived(() => {
     const now = dashboard.time.getTime()
     const oneMinuteAgo = now - 60_000
@@ -135,8 +154,8 @@
   })
 </script>
 
-<div class="hud-panel flex flex-col h-80">
-  <div class="flex justify-between items-center px-4 py-2 border-b border-hud-line shrink-0">
+<div class="hud-panel flex flex-col h-[18.5rem] sm:h-80">
+  <div class="flex justify-between items-center px-3 sm:px-4 py-2 border-b border-hud-line shrink-0">
     <span class="hud-label">ACTIVITY FEED</span>
     <div class="flex items-center gap-3">
       <span class="hud-label">LIVE</span>
@@ -148,62 +167,78 @@
       </button>
     </div>
   </div>
-  <div class="px-4 py-2 border-b border-hud-line/30">
-    <div class="flex flex-wrap gap-3 text-[10px] text-hud-text-dim">
+  <div class="px-3 sm:px-4 py-2 border-b border-hud-line/30">
+    <div class="flex flex-wrap gap-x-3 gap-y-1 text-[10px] text-hud-text-dim">
       <span class="hud-kv"><span>EVENTS (1M)</span><span class="hud-nums text-hud-text-bright">{activitySummary().events1m}</span></span>
       <span class="hud-kv"><span>EVENTS (5M)</span><span class="hud-nums text-hud-text-bright">{activitySummary().events5m}</span></span>
       <span class="hud-kv"><span>ACTIVE AGENTS</span><span class="hud-nums text-hud-text-bright">{activitySummary().activeAgents}</span></span>
       <span class="hud-kv"><span>ERRORS (5M)</span><span class="hud-nums text-hud-error">{activitySummary().errors5m}</span></span>
     </div>
   </div>
-  <div class="flex-1 min-h-0 p-3">
-    <div class="overflow-y-auto h-full font-mono text-xs space-y-1" use:autoScroll>
-    {#if dashboard.logs.length === 0}
-      <div class="text-hud-text-dim py-4 text-center">Waiting for activity...</div>
-    {:else}
-      {#each dashboard.logs.slice(-200) as log, i (`${log.timestamp}-${i}`)}
-        {@const chips = getDetailChips(log)}
-        <Tooltip position="right">
-          {#snippet children()}
-            <div
-              class="py-2 px-2 cursor-help hud-row"
-              transition:fade={{ duration: 200 }}
-            >
-              <div class="grid grid-cols-[64px_84px_minmax(0,1fr)] gap-2 items-start">
-                <span class="text-hud-text-dim shrink-0 hidden sm:inline">
-                  {new Date(log.timestamp).toLocaleTimeString('en-US', { hour12: false })}
-                </span>
-                <span class="shrink-0 text-right {getAgentColor(log.agent)}">
-                  {log.agent}
-                </span>
-                <span class="text-hud-text min-w-0 break-words line-clamp-2">
-                  {log.action}
-                  {#if log.symbol}<span class="text-hud-primary ml-1">({log.symbol})</span>{/if}
-                  {#if hasDetails(log)}<span class="text-hud-primary ml-1">•</span>{/if}
-                </span>
-              </div>
-              {#if chips.length > 0}
-                <div class="mt-1 flex flex-wrap gap-1 text-[10px]">
-                  {#each chips as chip}
-                    <span class="hud-chip {chip.color || ''}">
-                      <span class="text-hud-text-dim">{chip.label}</span>
-                      <span class="hud-nums">{chip.value}</span>
+  <div class="flex-1 min-h-0 p-2.5 sm:p-3">
+    <div class="overflow-y-auto h-full font-mono text-xs space-y-1 pr-1" use:autoScroll>
+      {#if dashboard.logs.length === 0}
+        <div class="text-hud-text-dim py-4 text-center">Waiting for activity...</div>
+      {:else}
+        {#each dashboard.logs.slice(-200) as log, i (`${log.timestamp}-${i}`)}
+          {@const chips = getDetailChips(log)}
+          <button
+            type="button"
+            class="w-full text-left py-2 px-2 rounded cursor-pointer hud-row"
+            onclick={() => openDetails(log)}
+            transition:fade={{ duration: 180 }}
+          >
+            <div class="flex items-start gap-2">
+              <span class="text-hud-text-dim shrink-0 w-[56px] sm:w-[64px] text-[10px] sm:text-xs">
+                {new Date(log.timestamp).toLocaleTimeString('en-US', { hour12: false })}
+              </span>
+              <div class="min-w-0 flex-1">
+                <div class="flex items-start justify-between gap-2">
+                  <div class="min-w-0 break-words">
+                    <span class="mr-1 {getAgentColor(log.agent)}">{log.agent}</span>
+                    <span class="text-hud-text">
+                      {log.action}
+                      {#if log.symbol}<span class="text-hud-primary ml-1">({log.symbol})</span>{/if}
                     </span>
-                  {/each}
+                  </div>
+                  {#if hasDetails(log)}
+                    <span class="hud-label text-hud-primary shrink-0">DETAIL</span>
+                  {/if}
                 </div>
-              {/if}
+                {#if chips.length > 0}
+                  <div class="mt-1.5 flex flex-wrap gap-1 text-[10px]">
+                    {#each chips as chip}
+                      <span class="hud-chip {chip.color || ''}">
+                        <span class="text-hud-text-dim">{chip.label}</span>
+                        <span class="hud-nums">{chip.value}</span>
+                      </span>
+                    {/each}
+                  </div>
+                {/if}
+              </div>
             </div>
-          {/snippet}
-          {#snippet content()}
-            <LogDetailsTooltip {log} />
-          {/snippet}
-        </Tooltip>
-      {/each}
-    {/if}
+          </button>
+        {/each}
+      {/if}
     </div>
   </div>
 </div>
 
 {#if showLogsModal}
   <LogsModal onClose={closeLogsModal} />
+{/if}
+
+{#if selectedLog}
+  <DetailWindow
+    open={true}
+    minimized={detailsMinimized}
+    minimizedIndex={1}
+    title={`${selectedLog.agent?.toUpperCase() || 'LOG'} DETAILS`}
+    subtitle={new Date(selectedLog.timestamp).toLocaleString('en-US', { hour12: false })}
+    onClose={closeDetails}
+    onMinimize={minimizeDetails}
+    onRestore={restoreDetails}
+  >
+    <LogDetailsTooltip log={selectedLog} />
+  </DetailWindow>
 {/if}

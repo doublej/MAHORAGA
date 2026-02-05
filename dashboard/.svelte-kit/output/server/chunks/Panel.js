@@ -282,10 +282,10 @@ function Panel($$renderer, $$props) {
   $$renderer.push(`<div${attr_class(`hud-panel flex flex-col ${stringify(className)}`)}>`);
   if (title || titleRight) {
     $$renderer.push("<!--[-->");
-    $$renderer.push(`<div class="flex justify-between items-center px-4 py-2 border-b border-hud-line shrink-0">`);
+    $$renderer.push(`<div class="flex justify-between items-center px-3 sm:px-4 py-2 border-b border-hud-line shrink-0 gap-2">`);
     if (title) {
       $$renderer.push("<!--[-->");
-      $$renderer.push(`<span class="hud-label">${escape_html(title)}</span>`);
+      $$renderer.push(`<span class="hud-label truncate">${escape_html(title)}</span>`);
     } else {
       $$renderer.push("<!--[!-->");
     }
@@ -294,7 +294,7 @@ function Panel($$renderer, $$props) {
       $$renderer.push("<!--[-->");
       if (typeof titleRight === "string") {
         $$renderer.push("<!--[-->");
-        $$renderer.push(`<span class="hud-value-sm">${escape_html(titleRight)}</span>`);
+        $$renderer.push(`<span class="hud-value-sm shrink-0">${escape_html(titleRight)}</span>`);
       } else {
         $$renderer.push("<!--[!-->");
         titleRight($$renderer);
@@ -308,7 +308,7 @@ function Panel($$renderer, $$props) {
   } else {
     $$renderer.push("<!--[!-->");
   }
-  $$renderer.push(`<!--]--> <div${attr_class(`flex-1 min-h-0 ${stringify(noPadding ? "" : "p-3")}`)}>`);
+  $$renderer.push(`<!--]--> <div${attr_class(`flex-1 min-h-0 ${stringify(noPadding ? "" : "p-2.5 sm:p-3")}`)}>`);
   children($$renderer);
   $$renderer.push(`<!----></div></div>`);
 }

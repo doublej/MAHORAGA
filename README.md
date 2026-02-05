@@ -61,16 +61,20 @@ bunx wrangler d1 migrations apply mahoraga-db
 bunx wrangler secret put ALPACA_API_KEY
 bunx wrangler secret put ALPACA_API_SECRET
 bunx wrangler secret put OPENAI_API_KEY
+bunx wrangler secret put KILL_SWITCH_SECRET   # Emergency kill switch (separate secret)
 
-# API Authentication - generate a secure random token (64+ chars recommended)
+# API Authentication option A (Bearer token) - generate a secure random token (64+ chars recommended)
 # Example: openssl rand -base64 48
 bunx wrangler secret put MAHORAGA_API_TOKEN
+
+# API Authentication option B (Cloudflare Access) - set your Access app AUD claim
+# You can set this as a secret or regular var
+bunx wrangler secret put CLOUDFLARE_ACCESS_AUD
 
 # Optional
 bunx wrangler secret put ALPACA_PAPER         # "true" for paper trading (recommended)
 bunx wrangler secret put TWITTER_BEARER_TOKEN
 bunx wrangler secret put DISCORD_WEBHOOK_URL
-bunx wrangler secret put KILL_SWITCH_SECRET   # Emergency kill switch (separate from API token)
 ```
 
 ### 4. Deploy
@@ -81,10 +85,12 @@ bunx wrangler deploy
 
 ### 5. Enable the agent
 
-All API endpoints require authentication via Bearer token:
+All API endpoints require authentication via either:
+- Bearer token (`MAHORAGA_API_TOKEN`)
+- Cloudflare Access JWT (`CLOUDFLARE_ACCESS_AUD` configured)
 
 ```bash
-# Set your API token as an env var for convenience
+# Set your API token as an env var for convenience (token mode)
 export MAHORAGA_TOKEN="your-api-token"
 
 # Enable the agent
@@ -173,13 +179,19 @@ See `docs/harness.html` for detailed customization guide.
 
 ### API Authentication (Required)
 
-All `/agent/*` endpoints require Bearer token authentication using `MAHORAGA_API_TOKEN`:
+All `/agent/*` endpoints require either bearer token auth or Cloudflare Access auth.
+
+#### Option A: Bearer Token
 
 ```bash
 curl -H "Authorization: Bearer $MAHORAGA_TOKEN" https://your-worker.workers.dev/agent/status
 ```
 
 Generate a secure token: `openssl rand -base64 48`
+
+#### Option B: Cloudflare Access
+
+Set `CLOUDFLARE_ACCESS_AUD` in your worker environment, then authenticate via Cloudflare Access login.
 
 ### Emergency Kill Switch
 
@@ -193,7 +205,7 @@ This immediately disables the agent, cancels all alarms, and clears the signal c
 
 ### Cloudflare Access (Recommended)
 
-For additional security with SSO/email verification, set up Cloudflare Access:
+For SSO/email verification, set up Cloudflare Access:
 
 ```bash
 # 1. Create a Cloudflare API token with Access:Edit permissions
@@ -205,6 +217,9 @@ CLOUDFLARE_ACCOUNT_ID=your-account-id \
 MAHORAGA_WORKER_URL=https://mahoraga.your-subdomain.workers.dev \
 MAHORAGA_ALLOWED_EMAILS=you@example.com \
 bun run setup:access
+
+# 3. Configure your Access AUD claim in the worker env
+bunx wrangler secret put CLOUDFLARE_ACCESS_AUD
 ```
 
 This creates a Cloudflare Access Application with email verification or One-Time PIN.

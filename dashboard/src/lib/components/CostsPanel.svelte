@@ -6,7 +6,7 @@
 </script>
 
 <Panel title="LLM COSTS" class="h-full">
-  <div class="grid grid-cols-2 gap-4">
+  <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
     <Metric label="TOTAL SPENT" value="${dashboard.costs.total_usd.toFixed(4)}" size="lg" />
     <Metric label="API CALLS" value={dashboard.costs.calls.toString()} size="lg" />
     <MetricInline label="TOKENS IN" value={dashboard.costs.tokens_in.toLocaleString()} />

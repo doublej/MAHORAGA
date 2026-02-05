@@ -4,7 +4,7 @@
   import { dashboard } from '$lib/stores/dashboard.svelte'
 </script>
 
-<Panel title="PORTFOLIO PERFORMANCE" titleRight="24H" class="h-[320px]">
+<Panel title="PORTFOLIO PERFORMANCE" titleRight="24H" class="h-[260px] sm:h-[320px]">
   {#if dashboard.portfolioChartData.length > 1}
     <div class="h-full w-full">
       <LineChart

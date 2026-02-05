@@ -33,37 +33,37 @@
   <ErrorScreen error={dashboard.error} />
 {:else}
   <div class="min-h-screen bg-hud-bg">
-    <div class="max-w-[1920px] mx-auto p-4">
+    <div class="max-w-[1920px] mx-auto px-2.5 py-3 sm:p-4">
       <Header />
 
-      <div class="grid grid-cols-4 md:grid-cols-8 lg:grid-cols-12 gap-4">
+      <div class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-12 gap-3 sm:gap-4">
         <!-- Row 1: Account, Positions, LLM Costs -->
-        <div class="col-span-4 md:col-span-4 lg:col-span-3">
+        <div class="sm:col-span-1 xl:col-span-3">
           <AccountPanel />
         </div>
-        <div class="col-span-4 md:col-span-4 lg:col-span-5">
+        <div class="sm:col-span-1 xl:col-span-5">
           <PositionsPanel />
         </div>
-        <div class="col-span-4 md:col-span-8 lg:col-span-4">
+        <div class="sm:col-span-2 xl:col-span-4">
           <CostsPanel />
         </div>
 
         <!-- Row 2: Portfolio Performance Chart -->
-        <div class="col-span-4 md:col-span-8 lg:col-span-8">
+        <div class="sm:col-span-2 xl:col-span-8">
           <PortfolioChart />
         </div>
-        <div class="col-span-4 md:col-span-8 lg:col-span-4">
+        <div class="sm:col-span-2 xl:col-span-4">
           <PositionPerformance />
         </div>
 
         <!-- Row 3: Signals, Activity, Research -->
-        <div class="col-span-4 md:col-span-4 lg:col-span-4">
+        <div class="sm:col-span-1 xl:col-span-4">
           <SignalsPanel />
         </div>
-        <div class="col-span-4 md:col-span-4 lg:col-span-4">
+        <div class="sm:col-span-1 xl:col-span-4">
           <ActivityFeed />
         </div>
-        <div class="col-span-4 md:col-span-8 lg:col-span-4">
+        <div class="sm:col-span-2 xl:col-span-4">
           <ResearchPanel />
         </div>
       </div>

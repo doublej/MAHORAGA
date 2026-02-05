@@ -14,29 +14,34 @@
     apiToken = trimmed
     dashboard.poll()
   }
+
+  function handleRetry() {
+    dashboard.poll()
+  }
 </script>
 
 <div class="min-h-screen bg-hud-bg flex items-center justify-center p-6">
   <Panel title={isAuthError ? 'AUTHENTICATION REQUIRED' : 'CONNECTION ERROR'} class="max-w-md w-full">
     <div class="text-center py-8">
-      <div class="text-hud-error text-2xl mb-4">{isAuthError ? 'NO TOKEN' : 'OFFLINE'}</div>
+      <div class="text-hud-error text-2xl mb-4">{isAuthError ? 'AUTH REQUIRED' : 'OFFLINE'}</div>
       <p class="text-hud-text-dim text-sm mb-6">{error}</p>
       {#if isAuthError}
         <div class="space-y-4">
           <div class="text-left bg-hud-panel p-4 border border-hud-line">
-            <label class="hud-label block mb-2">API Token</label>
+            <label class="hud-label block mb-2">API Token (Optional)</label>
             <input
               type="password"
               class="hud-input w-full mb-2"
               placeholder="Enter MAHORAGA_API_TOKEN"
               bind:value={apiToken}
             />
-            <button onclick={handleTokenSave} class="hud-button w-full">
-              Save & Connect
-            </button>
+            <div class="grid grid-cols-2 gap-2">
+              <button onclick={handleTokenSave} class="hud-button w-full">Save Token</button>
+              <button onclick={handleRetry} class="hud-button w-full">Retry</button>
+            </div>
           </div>
           <p class="text-hud-text-dim text-xs">
-            Find your token in <code class="text-hud-primary">.dev.vars</code> (local) or Cloudflare secrets (deployed)
+            Use either MAHORAGA_API_TOKEN or Cloudflare Access login.
           </p>
         </div>
       {:else}

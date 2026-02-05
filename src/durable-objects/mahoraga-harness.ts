@@ -41,6 +41,7 @@ import { createAlpacaProviders } from '../providers/alpaca';
 import type { Account, Position, MarketClock, LLMProvider } from '../providers/types';
 import { createLLMProvider } from '../providers/llm/factory';
 import { truncate, validateRequiredFields } from '../lib/utils';
+import { AUTH_UNAUTHORIZED_MESSAGE, isBearerTokenAuthorized, isRequestAuthorized } from '../lib/auth';
 
 // ============================================================================
 // SECTION 1: TYPES & CONFIGURATION
@@ -629,44 +630,18 @@ export class MahoragaHarness extends DurableObject<Env> {
   // Example: /webhook for external alerts, /backtest for simulation
   // ============================================================================
 
-  private constantTimeCompare(a: string, b: string): boolean {
-    if (a.length !== b.length) return false;
-    let mismatch = 0;
-    for (let i = 0; i < a.length; i++) {
-      mismatch |= a.charCodeAt(i) ^ b.charCodeAt(i);
-    }
-    return mismatch === 0;
-  }
-
-  private isAuthorized(request: Request): boolean {
-    const token = this.env.MAHORAGA_API_TOKEN;
-    if (!token) {
-      console.warn('[MahoragaHarness] MAHORAGA_API_TOKEN not set - denying request');
-      return false;
-    }
-    const authHeader = request.headers.get('Authorization');
-    if (!authHeader?.startsWith('Bearer ')) {
-      return false;
-    }
-    return this.constantTimeCompare(authHeader.slice(7), token);
+  private async isAuthorized(request: Request): Promise<boolean> {
+    return isRequestAuthorized(request, this.env);
   }
 
   private isKillSwitchAuthorized(request: Request): boolean {
-    const secret = this.env.KILL_SWITCH_SECRET;
-    if (!secret) {
-      return false;
-    }
-    const authHeader = request.headers.get('Authorization');
-    if (!authHeader?.startsWith('Bearer ')) {
-      return false;
-    }
-    return this.constantTimeCompare(authHeader.slice(7), secret);
+    return isBearerTokenAuthorized(request, this.env.KILL_SWITCH_SECRET);
   }
 
   private unauthorizedResponse(): Response {
     return new Response(
       JSON.stringify({
-        error: 'Unauthorized. Requires: Authorization: Bearer <MAHORAGA_API_TOKEN>',
+        error: AUTH_UNAUTHORIZED_MESSAGE,
       }),
       { status: 401, headers: { 'Content-Type': 'application/json' } }
     );
@@ -696,7 +671,7 @@ export class MahoragaHarness extends DurableObject<Env> {
       'setup/status',
     ];
     if (protectedActions.includes(action)) {
-      if (!this.isAuthorized(request)) {
+      if (!(await this.isAuthorized(request))) {
         return this.unauthorizedResponse();
       }
     }

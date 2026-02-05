@@ -22,8 +22,10 @@
   // Required:
   // - ALPACA_API_KEY
   // - ALPACA_API_SECRET
-  // - MAHORAGA_API_TOKEN (API authentication - generate with: openssl rand -base64 48)
   // - KILL_SWITCH_SECRET (emergency kill switch + approval token signing)
+  // Authentication (configure one or both):
+  // - MAHORAGA_API_TOKEN (bearer auth - generate with: openssl rand -base64 48)
+  // - CLOUDFLARE_ACCESS_AUD (Cloudflare Access JWT audience claim)
   // Optional:
   // - OPENAI_API_KEY (for LLM features)
   // - ALPACA_PAPER ("true" for paper trading)

@@ -7,7 +7,7 @@
   const positionColors = ['cyan', 'purple', 'yellow', 'blue', 'green'] as const
 </script>
 
-<Panel title="POSITION PERFORMANCE" titleRight="% CHANGE" class="h-[320px]">
+<Panel title="POSITION PERFORMANCE" titleRight="% CHANGE" class="h-[260px] sm:h-[320px]">
   {#if dashboard.positions.length === 0}
     <div class="h-full flex items-center justify-center text-hud-text-dim text-sm">
       No positions to display

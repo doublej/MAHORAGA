@@ -10,7 +10,7 @@
   {#if dashboard.account}
     <div class="space-y-4">
       <Metric label="EQUITY" value={formatCurrency(dashboard.account.equity)} size="xl" />
-      <div class="grid grid-cols-2 gap-4">
+      <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
         <Metric label="CASH" value={formatCurrency(dashboard.account.cash)} size="md" />
         <Metric label="BUYING POWER" value={formatCurrency(dashboard.account.buying_power)} size="md" />
       </div>
@@ -21,7 +21,7 @@
           size="md"
           color={dashboard.totalPl >= 0 ? 'success' : 'error'}
         />
-        <div class="grid grid-cols-2 gap-2">
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
           <MetricInline
             label="REALIZED"
             value={formatCurrency(dashboard.realizedPl)}

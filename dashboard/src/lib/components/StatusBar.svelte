@@ -19,7 +19,7 @@
   } = $props()
 </script>
 
-<div class="flex items-center gap-6 {className}">
+<div class="flex items-center flex-wrap gap-x-4 gap-y-1 {className}">
   {#each items as item}
     <div class="flex items-center gap-2">
       {#if item.status}
