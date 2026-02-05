@@ -272,8 +272,8 @@ const DEFAULT_CONFIG: AgentConfig = {
   stale_mid_min_gain_pct: 3,
   stale_social_volume_decay: 0.3,
   stale_no_mentions_hours: 24,
-  llm_model: 'claude-haiku-4-20250414',
-  llm_analyst_model: 'claude-haiku-4-20250414',
+  llm_model: 'gpt-5-mini',
+  llm_analyst_model: 'gpt-5-mini',
   llm_max_tokens: 500,
   options_enabled: false,
   options_min_confidence: 0.8,
@@ -2847,8 +2847,6 @@ Response format:
       { prefix: 'o4-mini-deep-research', input: 2.0, output: 8.0 },
       { prefix: 'o4-mini', input: 1.1, output: 4.4 },
       { prefix: 'codex-mini-latest', input: 1.5, output: 6.0 },
-      { prefix: 'claude-sonnet-4-20250514', input: 3.0, output: 15.0 },
-      { prefix: 'claude-haiku-4-20250414', input: 0.8, output: 4.0 },
     ];
 
     const match = pricingByPrefix.find(

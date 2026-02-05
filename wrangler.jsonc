@@ -25,9 +25,7 @@
   // - MAHORAGA_API_TOKEN (API authentication - generate with: openssl rand -base64 48)
   // - KILL_SWITCH_SECRET (emergency kill switch + approval token signing)
   // Optional:
-  // - LLM_PROVIDER ("openai" | "claude" | "auto")
-  // - OPENAI_API_KEY (for LLM features with OpenAI)
-  // - ANTHROPIC_API_KEY (for LLM features with Claude)
+  // - OPENAI_API_KEY (for LLM features)
   // - ALPACA_PAPER ("true" for paper trading)
   // - TWITTER_BEARER_TOKEN
   // - DISCORD_WEBHOOK_URL

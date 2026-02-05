@@ -9,7 +9,11 @@ import { getPolicyConfig, savePolicyConfig } from '../storage/d1/queries/policy-
 import { generateId } from '../lib/utils';
 import { success, failure } from './types';
 import { ErrorCode } from '../lib/errors';
-import { insertToolLog, getToolLogs, getToolLogsByRequestId } from '../storage/d1/queries/tool-logs';
+import {
+  insertToolLog,
+  getToolLogs,
+  getToolLogsByRequestId,
+} from '../storage/d1/queries/tool-logs';
 import {
   getRiskState,
   enableKillSwitch,
@@ -125,6 +129,14 @@ export class MahoragaMcpAgent extends McpAgent<Env> {
           });
           return { content: [{ type: 'text' as const, text: JSON.stringify(result, null, 2) }] };
         } catch (error) {
+          await insertToolLog(db, {
+            request_id: this.requestId,
+            tool_name: 'auth-verify',
+            input: {},
+            error: { code: ErrorCode.UNAUTHORIZED, message: String(error) },
+            latency_ms: Date.now() - startTime,
+            provider_calls: 1,
+          });
           return {
             content: [
               {
@@ -188,6 +200,14 @@ export class MahoragaMcpAgent extends McpAgent<Env> {
           });
           return { content: [{ type: 'text' as const, text: JSON.stringify(result, null, 2) }] };
         } catch (error) {
+          await insertToolLog(db, {
+            request_id: this.requestId,
+            tool_name: 'accounts-get',
+            input: {},
+            error: { code: ErrorCode.PROVIDER_ERROR, message: String(error) },
+            latency_ms: Date.now() - startTime,
+            provider_calls: 1,
+          });
           return {
             content: [
               {
@@ -255,6 +275,14 @@ export class MahoragaMcpAgent extends McpAgent<Env> {
 
           return { content: [{ type: 'text' as const, text: JSON.stringify(result, null, 2) }] };
         } catch (error) {
+          await insertToolLog(db, {
+            request_id: this.requestId,
+            tool_name: 'portfolio-get',
+            input: {},
+            error: { code: ErrorCode.PROVIDER_ERROR, message: String(error) },
+            latency_ms: Date.now() - startTime,
+            provider_calls: 3,
+          });
           return {
             content: [
               {
@@ -282,6 +310,7 @@ export class MahoragaMcpAgent extends McpAgent<Env> {
       'List all current positions',
       { symbol: z.string().optional() },
       async ({ symbol }) => {
+        const startTime = Date.now();
         try {
           const positions = await alpaca.trading.getPositions();
           const filtered = symbol
@@ -302,6 +331,14 @@ export class MahoragaMcpAgent extends McpAgent<Env> {
 
           return { content: [{ type: 'text' as const, text: JSON.stringify(result, null, 2) }] };
         } catch (error) {
+          await insertToolLog(db, {
+            request_id: this.requestId,
+            tool_name: 'positions-list',
+            input: { symbol },
+            error: { code: ErrorCode.PROVIDER_ERROR, message: String(error) },
+            latency_ms: Date.now() - startTime,
+            provider_calls: 1,
+          });
           return {
             content: [
               {
@@ -328,6 +365,7 @@ export class MahoragaMcpAgent extends McpAgent<Env> {
         percentage: z.number().min(0).max(100).optional(),
       },
       async ({ symbol, qty, percentage }) => {
+        const startTime = Date.now();
         try {
           const riskState = await getRiskState(db);
           if (riskState.kill_switch_active) {
@@ -361,6 +399,14 @@ export class MahoragaMcpAgent extends McpAgent<Env> {
 
           return { content: [{ type: 'text' as const, text: JSON.stringify(result, null, 2) }] };
         } catch (error) {
+          await insertToolLog(db, {
+            request_id: this.requestId,
+            tool_name: 'positions-close',
+            input: { symbol, qty, percentage },
+            error: { code: ErrorCode.PROVIDER_ERROR, message: String(error) },
+            latency_ms: Date.now() - startTime,
+            provider_calls: 1,
+          });
           return {
             content: [
               {
@@ -500,6 +546,14 @@ export class MahoragaMcpAgent extends McpAgent<Env> {
 
           return { content: [{ type: 'text' as const, text: JSON.stringify(result, null, 2) }] };
         } catch (error) {
+          await insertToolLog(db, {
+            request_id: this.requestId,
+            tool_name: 'orders-preview',
+            input,
+            error: { code: ErrorCode.INTERNAL_ERROR, message: String(error) },
+            latency_ms: Date.now() - startTime,
+            provider_calls: 5,
+          });
           return {
             content: [
               {
@@ -626,6 +680,14 @@ export class MahoragaMcpAgent extends McpAgent<Env> {
 
           return { content: [{ type: 'text' as const, text: JSON.stringify(result, null, 2) }] };
         } catch (error) {
+          await insertToolLog(db, {
+            request_id: this.requestId,
+            tool_name: 'orders-submit',
+            input: { approval_token: '[REDACTED]' },
+            error: { code: ErrorCode.PROVIDER_ERROR, message: String(error) },
+            latency_ms: Date.now() - startTime,
+            provider_calls: 3,
+          });
           return {
             content: [
               {
@@ -651,6 +713,7 @@ export class MahoragaMcpAgent extends McpAgent<Env> {
         limit: z.number().min(1).max(500).default(50),
       },
       async ({ status, limit }) => {
+        const startTime = Date.now();
         try {
           const orders = await alpaca.trading.listOrders({ status, limit });
           const result = success({
@@ -667,6 +730,14 @@ export class MahoragaMcpAgent extends McpAgent<Env> {
           });
           return { content: [{ type: 'text' as const, text: JSON.stringify(result, null, 2) }] };
         } catch (error) {
+          await insertToolLog(db, {
+            request_id: this.requestId,
+            tool_name: 'orders-list',
+            input: { status, limit },
+            error: { code: ErrorCode.PROVIDER_ERROR, message: String(error) },
+            latency_ms: Date.now() - startTime,
+            provider_calls: 1,
+          });
           return {
             content: [
               {
@@ -689,6 +760,7 @@ export class MahoragaMcpAgent extends McpAgent<Env> {
       'Cancel an order by ID',
       { order_id: z.string() },
       async ({ order_id }) => {
+        const startTime = Date.now();
         try {
           await alpaca.trading.cancelOrder(order_id);
           return {
@@ -700,6 +772,14 @@ export class MahoragaMcpAgent extends McpAgent<Env> {
             ],
           };
         } catch (error) {
+          await insertToolLog(db, {
+            request_id: this.requestId,
+            tool_name: 'orders-cancel',
+            input: { order_id },
+            error: { code: ErrorCode.PROVIDER_ERROR, message: String(error) },
+            latency_ms: Date.now() - startTime,
+            provider_calls: 1,
+          });
           return {
             content: [
               {
@@ -723,6 +803,7 @@ export class MahoragaMcpAgent extends McpAgent<Env> {
     alpaca: ReturnType<typeof createAlpacaProviders>
   ) {
     this.server.tool('risk-status', 'Get current risk status and limits', {}, async () => {
+      const startTime = Date.now();
       try {
         const [riskState, account, positions] = await Promise.all([
           getRiskState(db),
@@ -754,6 +835,14 @@ export class MahoragaMcpAgent extends McpAgent<Env> {
 
         return { content: [{ type: 'text' as const, text: JSON.stringify(result, null, 2) }] };
       } catch (error) {
+        await insertToolLog(db, {
+          request_id: this.requestId,
+          tool_name: 'risk-status',
+          input: {},
+          error: { code: ErrorCode.INTERNAL_ERROR, message: String(error) },
+          latency_ms: Date.now() - startTime,
+          provider_calls: 3,
+        });
         return {
           content: [
             {
@@ -775,6 +864,7 @@ export class MahoragaMcpAgent extends McpAgent<Env> {
       'Enable kill switch to halt all trading',
       { reason: z.string().min(1) },
       async ({ reason }) => {
+        const startTime = Date.now();
         try {
           await enableKillSwitch(db, reason);
           await alpaca.trading.cancelAllOrders();
@@ -787,6 +877,14 @@ export class MahoragaMcpAgent extends McpAgent<Env> {
             ],
           };
         } catch (error) {
+          await insertToolLog(db, {
+            request_id: this.requestId,
+            tool_name: 'kill-switch-enable',
+            input: { reason },
+            error: { code: ErrorCode.INTERNAL_ERROR, message: String(error) },
+            latency_ms: Date.now() - startTime,
+            provider_calls: 2,
+          });
           return {
             content: [
               {
@@ -812,6 +910,7 @@ export class MahoragaMcpAgent extends McpAgent<Env> {
         secret_hash: z.string(),
       },
       async ({ confirmation, secret_hash }) => {
+        const startTime = Date.now();
         try {
           if (confirmation !== 'CONFIRM_RESUME_TRADING') {
             return {
@@ -861,6 +960,14 @@ export class MahoragaMcpAgent extends McpAgent<Env> {
             ],
           };
         } catch (error) {
+          await insertToolLog(db, {
+            request_id: this.requestId,
+            tool_name: 'kill-switch-disable',
+            input: { confirmation, secret_hash: '[REDACTED]' },
+            error: { code: ErrorCode.INTERNAL_ERROR, message: String(error) },
+            latency_ms: Date.now() - startTime,
+            provider_calls: 1,
+          });
           return {
             content: [
               {
@@ -893,6 +1000,7 @@ export class MahoragaMcpAgent extends McpAgent<Env> {
       'Update policy configuration (requires agent restart to take effect)',
       { config: z.record(z.unknown()) },
       async ({ config }) => {
+        const startTime = Date.now();
         try {
           const merged = { ...this.policyConfig, ...config };
           const validated = validatePolicyConfig(merged);
@@ -904,6 +1012,14 @@ export class MahoragaMcpAgent extends McpAgent<Env> {
           });
           return { content: [{ type: 'text' as const, text: JSON.stringify(result, null, 2) }] };
         } catch (error) {
+          await insertToolLog(db, {
+            request_id: this.requestId,
+            tool_name: 'policy-config-update',
+            input: { config },
+            error: { code: ErrorCode.INVALID_INPUT, message: String(error) },
+            latency_ms: Date.now() - startTime,
+            provider_calls: 0,
+          });
           return {
             content: [
               {
@@ -1015,6 +1131,7 @@ export class MahoragaMcpAgent extends McpAgent<Env> {
         summary_only: z.boolean().default(false),
       },
       async ({ tool_name, request_id, limit, offset, summary_only }) => {
+        const startTime = Date.now();
         try {
           let logs: ToolLogEntry[];
 
@@ -1062,6 +1179,14 @@ export class MahoragaMcpAgent extends McpAgent<Env> {
             ],
           };
         } catch (error) {
+          await insertToolLog(db, {
+            request_id: this.requestId,
+            tool_name: 'logs-get',
+            input: { tool_name, request_id, limit, offset, summary_only },
+            error: { code: ErrorCode.INTERNAL_ERROR, message: String(error) },
+            latency_ms: Date.now() - startTime,
+            provider_calls: 0,
+          });
           return {
             content: [
               {
@@ -1096,6 +1221,7 @@ export class MahoragaMcpAgent extends McpAgent<Env> {
         notes: z.string().optional(),
       },
       async input => {
+        const startTime = Date.now();
         try {
           const journalId = await createJournalEntry(db, {
             symbol: input.symbol.toUpperCase(),
@@ -1121,6 +1247,14 @@ export class MahoragaMcpAgent extends McpAgent<Env> {
             ],
           };
         } catch (error) {
+          await insertToolLog(db, {
+            request_id: this.requestId,
+            tool_name: 'memory-log-trade',
+            input,
+            error: { code: ErrorCode.INTERNAL_ERROR, message: String(error) },
+            latency_ms: Date.now() - startTime,
+            provider_calls: 0,
+          });
           return {
             content: [
               {
@@ -1151,6 +1285,7 @@ export class MahoragaMcpAgent extends McpAgent<Env> {
         lessons_learned: z.string().optional(),
       },
       async input => {
+        const startTime = Date.now();
         try {
           await logOutcome(db, {
             journal_id: input.journal_id,
@@ -1170,6 +1305,14 @@ export class MahoragaMcpAgent extends McpAgent<Env> {
             ],
           };
         } catch (error) {
+          await insertToolLog(db, {
+            request_id: this.requestId,
+            tool_name: 'memory-log-outcome',
+            input,
+            error: { code: ErrorCode.INTERNAL_ERROR, message: String(error) },
+            latency_ms: Date.now() - startTime,
+            provider_calls: 0,
+          });
           return {
             content: [
               {
@@ -1198,6 +1341,7 @@ export class MahoragaMcpAgent extends McpAgent<Env> {
         limit: z.number().min(1).max(100).default(20),
       },
       async input => {
+        const startTime = Date.now();
         try {
           const [entries, stats, rules] = await Promise.all([
             queryJournal(db, {
@@ -1222,6 +1366,14 @@ export class MahoragaMcpAgent extends McpAgent<Env> {
             ],
           };
         } catch (error) {
+          await insertToolLog(db, {
+            request_id: this.requestId,
+            tool_name: 'memory-query',
+            input,
+            error: { code: ErrorCode.INTERNAL_ERROR, message: String(error) },
+            latency_ms: Date.now() - startTime,
+            provider_calls: 3,
+          });
           return {
             content: [
               {
@@ -1244,6 +1396,7 @@ export class MahoragaMcpAgent extends McpAgent<Env> {
       'Use LLM to analyze trading history and extract patterns (requires LLM feature)',
       { days: z.number().min(1).max(365).default(30) },
       async _input => {
+        const startTime = Date.now();
         if (!this.llm) {
           return {
             content: [
@@ -1284,6 +1437,14 @@ export class MahoragaMcpAgent extends McpAgent<Env> {
             ],
           };
         } catch (error) {
+          await insertToolLog(db, {
+            request_id: this.requestId,
+            tool_name: 'memory-summarize',
+            input: _input,
+            error: { code: ErrorCode.INTERNAL_ERROR, message: String(error) },
+            latency_ms: Date.now() - startTime,
+            provider_calls: 1,
+          });
           return {
             content: [
               {
@@ -1306,6 +1467,7 @@ export class MahoragaMcpAgent extends McpAgent<Env> {
       'Store user trading preferences',
       { preferences: z.record(z.unknown()) },
       async ({ preferences }) => {
+        const startTime = Date.now();
         try {
           await setPreferences(db, preferences);
           return {
@@ -1317,6 +1479,14 @@ export class MahoragaMcpAgent extends McpAgent<Env> {
             ],
           };
         } catch (error) {
+          await insertToolLog(db, {
+            request_id: this.requestId,
+            tool_name: 'memory-set-preferences',
+            input: { preferences },
+            error: { code: ErrorCode.INTERNAL_ERROR, message: String(error) },
+            latency_ms: Date.now() - startTime,
+            provider_calls: 0,
+          });
           return {
             content: [
               {
@@ -1339,6 +1509,7 @@ export class MahoragaMcpAgent extends McpAgent<Env> {
       'Get stored user trading preferences',
       {},
       async () => {
+        const startTime = Date.now();
         try {
           const preferences = await getPreferences(db);
           return {
@@ -1347,6 +1518,14 @@ export class MahoragaMcpAgent extends McpAgent<Env> {
             ],
           };
         } catch (error) {
+          await insertToolLog(db, {
+            request_id: this.requestId,
+            tool_name: 'memory-get-preferences',
+            input: {},
+            error: { code: ErrorCode.INTERNAL_ERROR, message: String(error) },
+            latency_ms: Date.now() - startTime,
+            provider_calls: 0,
+          });
           return {
             content: [
               {
@@ -1439,6 +1618,7 @@ export class MahoragaMcpAgent extends McpAgent<Env> {
         limit: z.number().min(1).max(1000).default(100),
       },
       async ({ symbol, timeframe, limit }) => {
+        const startTime = Date.now();
         try {
           const bars = await alpaca.marketData.getBars(symbol.toUpperCase(), timeframe, { limit });
           return {
@@ -1454,6 +1634,14 @@ export class MahoragaMcpAgent extends McpAgent<Env> {
             ],
           };
         } catch (error) {
+          await insertToolLog(db, {
+            request_id: this.requestId,
+            tool_name: 'prices-bars',
+            input: { symbol, timeframe, limit },
+            error: { code: ErrorCode.PROVIDER_ERROR, message: String(error) },
+            latency_ms: Date.now() - startTime,
+            provider_calls: 1,
+          });
           return {
             content: [
               {
