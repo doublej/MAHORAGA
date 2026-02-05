@@ -37,7 +37,10 @@ interface OpenAIResponsesOutputItem {
 
 interface OpenAIResponsesResponse {
   id: string;
+  status?: string; // "completed", "incomplete", "failed", etc.
   output?: OpenAIResponsesOutputItem[];
+  output_text?: string;
+  error?: { message?: string; code?: string };
   usage?: {
     input_tokens?: number;
     output_tokens?: number;
@@ -45,15 +48,37 @@ interface OpenAIResponsesResponse {
   };
 }
 
-const REASONING_PREFIXES = ['o1', 'o3', 'o4', 'gpt-5'];
-const RESPONSES_PREFIXES = ['o1', 'o3', 'o4', 'gpt-5', 'gpt-4.1', 'gpt-4o', 'gpt-5.1-codex'];
+// Reasoning models get special treatment (no temperature, reasoning effort param)
+// Note: -mini variants are NOT reasoning models even if they use the Responses API
+const REASONING_PREFIXES = ['o1', 'o3', 'o4'];
+// gpt-5 reasoning: only the full model, not mini
+const REASONING_EXACT = ['gpt-5'];
+
+// Models that use the Responses API (instead of Chat Completions)
+const RESPONSES_PREFIXES = ['o1', 'o3', 'o4', 'gpt-5', 'gpt-4.1', 'gpt-4o'];
+
+// Models that don't support temperature on the Responses API
+const NO_TEMPERATURE_PREFIXES = ['o1', 'o3', 'o4', 'gpt-5'];
+
+function matchesPrefix(model: string, prefixes: string[]): boolean {
+  return prefixes.some(p => model === p || model.startsWith(`${p}-`) || model.startsWith(`${p}.`));
+}
 
 function isReasoningModel(model: string): boolean {
-  return REASONING_PREFIXES.some(p => model === p || model.startsWith(`${p}-`));
+  // o1, o3, o4 prefixes are always reasoning
+  if (matchesPrefix(model, REASONING_PREFIXES)) return true;
+  // gpt-5 exact match only (not gpt-5-mini, gpt-5.1, etc.)
+  return REASONING_EXACT.includes(model);
 }
 
 function shouldUseResponses(model: string): boolean {
-  return RESPONSES_PREFIXES.some(p => model === p || model.startsWith(`${p}-`));
+  // Exclude -mini variants from Responses API (use Chat Completions for broader geo support)
+  if (model.endsWith('-mini')) return false;
+  return matchesPrefix(model, RESPONSES_PREFIXES);
+}
+
+function supportsTemperature(model: string): boolean {
+  return !matchesPrefix(model, NO_TEMPERATURE_PREFIXES);
 }
 
 function mapRole(
@@ -81,21 +106,23 @@ function buildResponsesInput(
 }
 
 function extractResponsesText(data: OpenAIResponsesResponse): string {
-  const parts: string[] = [];
+  // Check response status - only "completed" has valid output
+  if (data.status && data.status !== 'completed') {
+    const errMsg = data.error?.message || `response status: ${data.status}`;
+    throw createError(ErrorCode.PROVIDER_ERROR, `OpenAI Responses API: ${errMsg}`);
+  }
+
+  if (data.output_text) return data.output_text;
+
   for (const item of data.output ?? []) {
     if (item.type === 'message' && Array.isArray(item.content)) {
-      for (const content of item.content) {
-        if (content.type === 'output_text' && typeof content.text === 'string') {
-          parts.push(content.text);
-        }
+      for (const block of item.content) {
+        if (block.type === 'text' && block.text) return block.text;
       }
-      continue;
-    }
-    if (item.type === 'output_text' && typeof item.text === 'string') {
-      parts.push(item.text);
     }
   }
-  return parts.join('');
+
+  throw createError(ErrorCode.PROVIDER_ERROR, 'OpenAI Responses API returned empty content');
 }
 
 export class OpenAIProvider implements LLMProvider {
@@ -131,9 +158,10 @@ export class OpenAIProvider implements LLMProvider {
       max_output_tokens: params.max_tokens ?? 1024,
     };
 
-    if (!reasoning) {
+    if (supportsTemperature(model)) {
       body.temperature = params.temperature ?? 0.7;
-    } else if (params.reasoning_effort) {
+    }
+    if (reasoning && params.reasoning_effort) {
       body.reasoning = { effort: params.reasoning_effort };
     }
 
@@ -190,14 +218,20 @@ export class OpenAIProvider implements LLMProvider {
       messages,
     };
 
-    if (reasoning) {
+    // gpt-5 family uses max_completion_tokens, older models use max_tokens
+    const usesMaxCompletionTokens = reasoning || model.startsWith('gpt-5');
+    if (usesMaxCompletionTokens) {
       body.max_completion_tokens = params.max_tokens ?? 1024;
-      if (params.reasoning_effort) {
-        body.reasoning_effort = params.reasoning_effort;
-      }
     } else {
-      body.temperature = params.temperature ?? 0.7;
       body.max_tokens = params.max_tokens ?? 1024;
+    }
+
+    if (reasoning && params.reasoning_effort) {
+      body.reasoning_effort = params.reasoning_effort;
+    }
+
+    if (!reasoning) {
+      body.temperature = params.temperature ?? 0.7;
     }
 
     if (params.response_format) {
@@ -223,7 +257,10 @@ export class OpenAIProvider implements LLMProvider {
 
     const data = (await response.json()) as OpenAIChatResponse;
 
-    const content = data.choices[0]?.message?.content ?? '';
+    const content = data.choices[0]?.message?.content;
+    if (!content) {
+      throw createError(ErrorCode.PROVIDER_ERROR, 'OpenAI Chat Completions returned empty content');
+    }
 
     return {
       content,
