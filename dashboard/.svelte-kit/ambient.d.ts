@@ -107,6 +107,7 @@ declare module '$env/static/private' {
 	export const OLDPWD: string;
 	export const GOPATH: string;
 	export const __CF_USER_TEXT_ENCODING: string;
+	export const NODE_ENV: string;
 }
 
 /**
@@ -217,6 +218,7 @@ declare module '$env/dynamic/private' {
 		OLDPWD: string;
 		GOPATH: string;
 		__CF_USER_TEXT_ENCODING: string;
+		NODE_ENV: string;
 		[key: `PUBLIC_${string}`]: undefined;
 		[key: `${string}`]: string | undefined;
 	}
