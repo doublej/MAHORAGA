@@ -92,12 +92,20 @@ export class AlpacaMarketDataProvider implements MarketDataProvider {
   constructor(private client: AlpacaClient) {}
 
   async getBars(symbol: string, timeframe: string, params?: BarsParams): Promise<Bar[]> {
+    // Default start: 1 year ago for daily, 7 days for intraday
+    const defaultStart = new Date();
+    if (timeframe === '1Day') {
+      defaultStart.setFullYear(defaultStart.getFullYear() - 1);
+    } else {
+      defaultStart.setDate(defaultStart.getDate() - 7);
+    }
+
     const response = await this.client.dataRequest<AlpacaBarsResponse | { bars: AlpacaBar[] }>(
       'GET',
       `/v2/stocks/${encodeURIComponent(symbol)}/bars`,
       {
         timeframe,
-        start: params?.start,
+        start: params?.start ?? defaultStart.toISOString(),
         end: params?.end,
         limit: params?.limit,
         adjustment: params?.adjustment,
