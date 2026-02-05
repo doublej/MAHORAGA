@@ -2,14 +2,14 @@ import { McpAgent } from 'agents/mcp';
 import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { z } from 'zod';
 import type { Env } from '../env.d';
-import { createD1Client, D1Client } from '../storage/d1/client';
+import { createD1Client, D1Client, ToolLogEntry } from '../storage/d1/client';
 import { createAlpacaProviders } from '../providers/alpaca';
 import { getDefaultPolicyConfig, PolicyConfig, validatePolicyConfig } from '../policy/config';
 import { getPolicyConfig, savePolicyConfig } from '../storage/d1/queries/policy-config';
 import { generateId } from '../lib/utils';
 import { success, failure } from './types';
 import { ErrorCode } from '../lib/errors';
-import { insertToolLog } from '../storage/d1/queries/tool-logs';
+import { insertToolLog, getToolLogs, getToolLogsByRequestId } from '../storage/d1/queries/tool-logs';
 import {
   getRiskState,
   enableKillSwitch,
@@ -926,6 +926,8 @@ export class MahoragaMcpAgent extends McpAgent<Env> {
   }
 
   private registerUtilityTools() {
+    const db = createD1Client(this.env.DB);
+
     this.server.tool('help-usage', 'Get help information about using Mahoraga', {}, async () => {
       const result = success({
         name: 'Mahoraga MCP Trading Server',
@@ -995,12 +997,87 @@ export class MahoragaMcpAgent extends McpAgent<Env> {
             'options-order-submit',
           ],
         },
-        { category: 'Utility', tools: ['help-usage', 'catalog-list'] },
+        { category: 'Utility', tools: ['help-usage', 'catalog-list', 'logs-get'] },
       ];
       return {
         content: [{ type: 'text' as const, text: JSON.stringify(success({ catalog }), null, 2) }],
       };
     });
+
+    this.server.tool(
+      'logs-get',
+      'Get application logs with filtering and pagination',
+      {
+        tool_name: z.string().optional(),
+        request_id: z.string().optional(),
+        limit: z.number().min(1).max(200).default(50),
+        offset: z.number().min(0).default(0),
+        summary_only: z.boolean().default(false),
+      },
+      async ({ tool_name, request_id, limit, offset, summary_only }) => {
+        try {
+          let logs: ToolLogEntry[];
+
+          if (request_id) {
+            logs = await getToolLogsByRequestId(db, request_id);
+          } else {
+            logs = await getToolLogs(db, { tool_name, limit, offset });
+          }
+
+          if (summary_only) {
+            const summary = logs.map(log => ({
+              id: log.id,
+              tool_name: log.tool_name,
+              created_at: log.created_at,
+              latency_ms: log.latency_ms,
+              provider_calls: log.provider_calls,
+              has_error: !!log.error_json,
+            }));
+            return {
+              content: [
+                {
+                  type: 'text' as const,
+                  text: JSON.stringify(success({ count: logs.length, logs: summary }), null, 2),
+                },
+              ],
+            };
+          }
+
+          const compact = logs.map(log => ({
+            id: log.id,
+            request_id: log.request_id,
+            tool_name: log.tool_name,
+            created_at: log.created_at,
+            latency_ms: log.latency_ms,
+            provider_calls: log.provider_calls,
+            error: log.error_json ? JSON.parse(log.error_json) : null,
+          }));
+
+          return {
+            content: [
+              {
+                type: 'text' as const,
+                text: JSON.stringify(success({ count: logs.length, logs: compact }), null, 2),
+              },
+            ],
+          };
+        } catch (error) {
+          return {
+            content: [
+              {
+                type: 'text' as const,
+                text: JSON.stringify(
+                  failure({ code: ErrorCode.INTERNAL_ERROR, message: String(error) }),
+                  null,
+                  2
+                ),
+              },
+            ],
+            isError: true,
+          };
+        }
+      }
+    );
   }
 
   private registerMemoryTools(db: D1Client) {
