@@ -230,7 +230,8 @@ export class OpenAIProvider implements LLMProvider {
       body.reasoning_effort = params.reasoning_effort;
     }
 
-    if (!reasoning) {
+    // gpt-5 family doesn't support custom temperature (only default 1)
+    if (!reasoning && supportsTemperature(model)) {
       body.temperature = params.temperature ?? 0.7;
     }
 
