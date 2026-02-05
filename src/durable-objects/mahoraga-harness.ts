@@ -1269,7 +1269,7 @@ JSON response:
           },
           { role: 'user', content: prompt },
         ],
-        max_tokens: 250,
+        max_tokens: 1000,
         temperature: 0.3,
         response_format: { type: 'json_object' },
       });
@@ -1711,7 +1711,7 @@ JSON response:
           },
           { role: 'user', content: prompt },
         ],
-        max_tokens: 250,
+        max_tokens: 1000,
         temperature: 0.3,
         response_format: { type: 'json_object' },
       });
@@ -1881,7 +1881,7 @@ Provide a brief risk assessment and recommendation (HOLD, SELL, or ADD). JSON fo
           },
           { role: 'user', content: prompt },
         ],
-        max_tokens: 200,
+        max_tokens: 800,
         temperature: 0.3,
         response_format: { type: 'json_object' },
       });
@@ -2053,7 +2053,7 @@ Response format:
           },
           { role: 'user', content: prompt },
         ],
-        max_tokens: 800,
+        max_tokens: 1500,
         temperature: 0.4,
         response_format: { type: 'json_object' },
       });
