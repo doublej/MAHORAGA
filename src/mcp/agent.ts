@@ -1660,12 +1660,21 @@ export class MahoragaMcpAgent extends McpAgent<Env> {
     );
 
     this.server.tool('market-clock', 'Get current market clock status', {}, async () => {
+      const startTime = Date.now();
       try {
         const clock = await alpaca.trading.getClock();
         return {
           content: [{ type: 'text' as const, text: JSON.stringify(success(clock), null, 2) }],
         };
       } catch (error) {
+        await insertToolLog(db, {
+          request_id: this.requestId,
+          tool_name: 'market-clock',
+          input: {},
+          error: { code: ErrorCode.PROVIDER_ERROR, message: String(error) },
+          latency_ms: Date.now() - startTime,
+          provider_calls: 1,
+        });
         return {
           content: [
             {
@@ -1687,6 +1696,7 @@ export class MahoragaMcpAgent extends McpAgent<Env> {
       'Get top gainers and losers from watchlist symbols',
       { symbols: z.array(z.string()).min(1).max(50) },
       async ({ symbols }) => {
+        const startTime = Date.now();
         try {
           const snapshots = await alpaca.marketData.getSnapshots(symbols.map(s => s.toUpperCase()));
           const movers = Object.entries(snapshots).map(([sym, snap]) => ({
@@ -1710,6 +1720,14 @@ export class MahoragaMcpAgent extends McpAgent<Env> {
             ],
           };
         } catch (error) {
+          await insertToolLog(db, {
+            request_id: this.requestId,
+            tool_name: 'market-movers',
+            input: { symbols },
+            error: { code: ErrorCode.PROVIDER_ERROR, message: String(error) },
+            latency_ms: Date.now() - startTime,
+            provider_calls: 1,
+          });
           return {
             content: [
               {
@@ -1732,6 +1750,7 @@ export class MahoragaMcpAgent extends McpAgent<Env> {
       'Get latest quotes for multiple symbols',
       { symbols: z.array(z.string()).min(1).max(100) },
       async ({ symbols }) => {
+        const startTime = Date.now();
         try {
           const quotes = await alpaca.marketData.getQuotes(symbols.map(s => s.toUpperCase()));
           return {
@@ -1747,6 +1766,14 @@ export class MahoragaMcpAgent extends McpAgent<Env> {
             ],
           };
         } catch (error) {
+          await insertToolLog(db, {
+            request_id: this.requestId,
+            tool_name: 'quotes-batch',
+            input: { symbols },
+            error: { code: ErrorCode.PROVIDER_ERROR, message: String(error) },
+            latency_ms: Date.now() - startTime,
+            provider_calls: 1,
+          });
           return {
             content: [
               {
@@ -1769,6 +1796,7 @@ export class MahoragaMcpAgent extends McpAgent<Env> {
       'Get a quote for a single symbol (stocks or crypto)',
       { symbol: z.string().min(1) },
       async ({ symbol }) => {
+        const startTime = Date.now();
         try {
           let isCrypto = symbol.includes('/');
           if (!isCrypto) {
@@ -1796,6 +1824,14 @@ export class MahoragaMcpAgent extends McpAgent<Env> {
           });
           return { content: [{ type: 'text' as const, text: JSON.stringify(result, null, 2) }] };
         } catch (error) {
+          await insertToolLog(db, {
+            request_id: this.requestId,
+            tool_name: 'market-quote',
+            input: { symbol },
+            error: { code: ErrorCode.PROVIDER_ERROR, message: String(error) },
+            latency_ms: Date.now() - startTime,
+            provider_calls: 1,
+          });
           return {
             content: [
               {
@@ -1814,7 +1850,7 @@ export class MahoragaMcpAgent extends McpAgent<Env> {
     );
   }
 
-  private registerTechnicalTools(_db: D1Client, alpaca: ReturnType<typeof createAlpacaProviders>) {
+  private registerTechnicalTools(db: D1Client, alpaca: ReturnType<typeof createAlpacaProviders>) {
     this.server.tool(
       'technicals-get',
       'Calculate technical indicators for a symbol',
@@ -1823,6 +1859,7 @@ export class MahoragaMcpAgent extends McpAgent<Env> {
         timeframe: z.enum(['1Min', '5Min', '15Min', '1Hour', '1Day']).default('1Day'),
       },
       async ({ symbol, timeframe }) => {
+        const startTime = Date.now();
         try {
           const bars = await alpaca.marketData.getBars(symbol.toUpperCase(), timeframe, {
             limit: 250,
@@ -1852,6 +1889,14 @@ export class MahoragaMcpAgent extends McpAgent<Env> {
             ],
           };
         } catch (error) {
+          await insertToolLog(db, {
+            request_id: this.requestId,
+            tool_name: 'technicals-get',
+            input: { symbol, timeframe },
+            error: { code: ErrorCode.PROVIDER_ERROR, message: String(error) },
+            latency_ms: Date.now() - startTime,
+            provider_calls: 1,
+          });
           return {
             content: [
               {
@@ -1877,6 +1922,7 @@ export class MahoragaMcpAgent extends McpAgent<Env> {
         timeframe: z.enum(['1Min', '5Min', '15Min', '1Hour', '1Day']).default('1Day'),
       },
       async ({ symbol, timeframe }) => {
+        const startTime = Date.now();
         try {
           const bars = await alpaca.marketData.getBars(symbol.toUpperCase(), timeframe, {
             limit: 250,
@@ -1914,6 +1960,14 @@ export class MahoragaMcpAgent extends McpAgent<Env> {
             ],
           };
         } catch (error) {
+          await insertToolLog(db, {
+            request_id: this.requestId,
+            tool_name: 'signals-get',
+            input: { symbol, timeframe },
+            error: { code: ErrorCode.PROVIDER_ERROR, message: String(error) },
+            latency_ms: Date.now() - startTime,
+            provider_calls: 1,
+          });
           return {
             content: [
               {
@@ -1939,6 +1993,7 @@ export class MahoragaMcpAgent extends McpAgent<Env> {
         timeframe: z.enum(['1Min', '5Min', '15Min', '1Hour', '1Day']).default('1Day'),
       },
       async ({ symbols, timeframe }) => {
+        const startTime = Date.now();
         try {
           const results: Array<{
             symbol: string;
@@ -1970,6 +2025,14 @@ export class MahoragaMcpAgent extends McpAgent<Env> {
             ],
           };
         } catch (error) {
+          await insertToolLog(db, {
+            request_id: this.requestId,
+            tool_name: 'signals-batch',
+            input: { symbols, timeframe },
+            error: { code: ErrorCode.PROVIDER_ERROR, message: String(error) },
+            latency_ms: Date.now() - startTime,
+            provider_calls: 1,
+          });
           return {
             content: [
               {
@@ -1998,6 +2061,7 @@ export class MahoragaMcpAgent extends McpAgent<Env> {
         content: z.string().min(1),
       },
       async ({ source, source_id, content }) => {
+        const startTime = Date.now();
         try {
           const eventId = await insertRawEvent(db, { source, source_id, raw_content: content });
           return {
@@ -2013,6 +2077,14 @@ export class MahoragaMcpAgent extends McpAgent<Env> {
             ],
           };
         } catch (error) {
+          await insertToolLog(db, {
+            request_id: this.requestId,
+            tool_name: 'events-ingest',
+            input: { source, source_id, content },
+            error: { code: ErrorCode.INTERNAL_ERROR, message: String(error) },
+            latency_ms: Date.now() - startTime,
+            provider_calls: 0,
+          });
           return {
             content: [
               {
@@ -2040,6 +2112,7 @@ export class MahoragaMcpAgent extends McpAgent<Env> {
         limit: z.number().min(1).max(100).default(20),
       },
       async input => {
+        const startTime = Date.now();
         try {
           const events = await queryStructuredEvents(db, {
             event_type: input.event_type,
@@ -2056,6 +2129,14 @@ export class MahoragaMcpAgent extends McpAgent<Env> {
             ],
           };
         } catch (error) {
+          await insertToolLog(db, {
+            request_id: this.requestId,
+            tool_name: 'events-list',
+            input,
+            error: { code: ErrorCode.INTERNAL_ERROR, message: String(error) },
+            latency_ms: Date.now() - startTime,
+            provider_calls: 0,
+          });
           return {
             content: [
               {
@@ -2081,6 +2162,7 @@ export class MahoragaMcpAgent extends McpAgent<Env> {
         store: z.boolean().default(true),
       },
       async ({ content, store }) => {
+        const startTime = Date.now();
         if (!this.llm) {
           return {
             content: [
@@ -2119,6 +2201,14 @@ export class MahoragaMcpAgent extends McpAgent<Env> {
             ],
           };
         } catch (error) {
+          await insertToolLog(db, {
+            request_id: this.requestId,
+            tool_name: 'events-classify',
+            input: { content, store },
+            error: { code: ErrorCode.INTERNAL_ERROR, message: String(error) },
+            latency_ms: Date.now() - startTime,
+            provider_calls: 1,
+          });
           return {
             content: [
               {
@@ -2147,6 +2237,7 @@ export class MahoragaMcpAgent extends McpAgent<Env> {
         limit: z.number().min(1).max(100).default(20),
       },
       async input => {
+        const startTime = Date.now();
         try {
           const news = await queryNewsItems(db, {
             symbol: input.symbol,
@@ -2162,6 +2253,14 @@ export class MahoragaMcpAgent extends McpAgent<Env> {
             ],
           };
         } catch (error) {
+          await insertToolLog(db, {
+            request_id: this.requestId,
+            tool_name: 'news-list',
+            input,
+            error: { code: ErrorCode.INTERNAL_ERROR, message: String(error) },
+            latency_ms: Date.now() - startTime,
+            provider_calls: 0,
+          });
           return {
             content: [
               {
@@ -2192,6 +2291,7 @@ export class MahoragaMcpAgent extends McpAgent<Env> {
         published_at: z.string().optional(),
       },
       async input => {
+        const startTime = Date.now();
         try {
           const newsId = await insertNewsItem(db, {
             source: input.source,
@@ -2215,6 +2315,14 @@ export class MahoragaMcpAgent extends McpAgent<Env> {
             ],
           };
         } catch (error) {
+          await insertToolLog(db, {
+            request_id: this.requestId,
+            tool_name: 'news-index',
+            input,
+            error: { code: ErrorCode.INTERNAL_ERROR, message: String(error) },
+            latency_ms: Date.now() - startTime,
+            provider_calls: 0,
+          });
           return {
             content: [
               {
@@ -2327,6 +2435,7 @@ export class MahoragaMcpAgent extends McpAgent<Env> {
         symbol: z.string().optional(),
       },
       async ({ url, symbol }) => {
+        const startTime = Date.now();
         if (!isAllowedDomain(url)) {
           return {
             content: [
@@ -2358,6 +2467,14 @@ export class MahoragaMcpAgent extends McpAgent<Env> {
             ],
           };
         } catch (error) {
+          await insertToolLog(db, {
+            request_id: this.requestId,
+            tool_name: 'web-scrape-financial',
+            input: { url, symbol },
+            error: { code: ErrorCode.PROVIDER_ERROR, message: String(error) },
+            latency_ms: Date.now() - startTime,
+            provider_calls: 1,
+          });
           return {
             content: [
               {
@@ -2377,11 +2494,14 @@ export class MahoragaMcpAgent extends McpAgent<Env> {
   }
 
   private registerOptionsTools() {
+    const db = createD1Client(this.env.DB);
+
     this.server.tool(
       'options-expirations',
       'Get available option expiration dates for a symbol',
       { underlying: z.string().min(1) },
       async ({ underlying }) => {
+        const startTime = Date.now();
         if (!this.options || !this.options.isConfigured()) {
           return {
             content: [
@@ -2415,6 +2535,14 @@ export class MahoragaMcpAgent extends McpAgent<Env> {
             ],
           };
         } catch (error) {
+          await insertToolLog(db, {
+            request_id: this.requestId,
+            tool_name: 'options-expirations',
+            input: { underlying },
+            error: { code: ErrorCode.PROVIDER_ERROR, message: String(error) },
+            latency_ms: Date.now() - startTime,
+            provider_calls: 1,
+          });
           return {
             content: [
               {
@@ -2440,6 +2568,7 @@ export class MahoragaMcpAgent extends McpAgent<Env> {
         expiration: z.string().min(1),
       },
       async ({ underlying, expiration }) => {
+        const startTime = Date.now();
         if (!this.options || !this.options.isConfigured()) {
           return {
             content: [
@@ -2464,6 +2593,14 @@ export class MahoragaMcpAgent extends McpAgent<Env> {
             content: [{ type: 'text' as const, text: JSON.stringify(success(chain), null, 2) }],
           };
         } catch (error) {
+          await insertToolLog(db, {
+            request_id: this.requestId,
+            tool_name: 'options-chain',
+            input: { underlying, expiration },
+            error: { code: ErrorCode.PROVIDER_ERROR, message: String(error) },
+            latency_ms: Date.now() - startTime,
+            provider_calls: 1,
+          });
           return {
             content: [
               {
@@ -2486,6 +2623,7 @@ export class MahoragaMcpAgent extends McpAgent<Env> {
       'Get current snapshot for an options contract',
       { contract_symbol: z.string().min(1) },
       async ({ contract_symbol }) => {
+        const startTime = Date.now();
         if (!this.options || !this.options.isConfigured()) {
           return {
             content: [
@@ -2510,6 +2648,14 @@ export class MahoragaMcpAgent extends McpAgent<Env> {
             content: [{ type: 'text' as const, text: JSON.stringify(success(snapshot), null, 2) }],
           };
         } catch (error) {
+          await insertToolLog(db, {
+            request_id: this.requestId,
+            tool_name: 'options-snapshot',
+            input: { contract_symbol },
+            error: { code: ErrorCode.PROVIDER_ERROR, message: String(error) },
+            latency_ms: Date.now() - startTime,
+            provider_calls: 1,
+          });
           return {
             content: [
               {
@@ -2666,6 +2812,14 @@ export class MahoragaMcpAgent extends McpAgent<Env> {
 
           return { content: [{ type: 'text' as const, text: JSON.stringify(result, null, 2) }] };
         } catch (error) {
+          await insertToolLog(db, {
+            request_id: this.requestId,
+            tool_name: 'options-order-preview',
+            input,
+            error: { code: ErrorCode.INTERNAL_ERROR, message: String(error) },
+            latency_ms: Date.now() - startTime,
+            provider_calls: 5,
+          });
           return {
             content: [
               {
@@ -2792,6 +2946,14 @@ export class MahoragaMcpAgent extends McpAgent<Env> {
 
           return { content: [{ type: 'text' as const, text: JSON.stringify(result, null, 2) }] };
         } catch (error) {
+          await insertToolLog(db, {
+            request_id: this.requestId,
+            tool_name: 'options-order-submit',
+            input: { approval_token: '[REDACTED]' },
+            error: { code: ErrorCode.PROVIDER_ERROR, message: String(error) },
+            latency_ms: Date.now() - startTime,
+            provider_calls: 3,
+          });
           return {
             content: [
               {
