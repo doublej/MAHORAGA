@@ -25,7 +25,7 @@ export const AgentConfigSchema = z
     stale_mid_min_gain_pct: z.number().min(0).max(100),
     stale_social_volume_decay: z.number().min(0).max(1),
 
-    llm_provider: z.enum(["openai-raw", "ai-sdk", "cloudflare-gateway"]),
+    llm_provider: z.enum(["openai-raw", "ai-sdk", "cloudflare-gateway", "gemini-vertex"]),
     llm_model: z.string().min(1),
     llm_analyst_model: z.string().min(1),
     llm_min_hold_minutes: z.number().min(0).max(1440),

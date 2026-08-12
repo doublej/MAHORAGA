@@ -13,7 +13,6 @@ export function SetupWizard({ onComplete }: SetupWizardProps) {
   
   const [alpacaKey, setAlpacaKey] = useState('')
   const [alpacaSecret, setAlpacaSecret] = useState('')
-  const [openaiKey, setOpenaiKey] = useState('')
   const [paperMode, setPaperMode] = useState(true)
   const [startingEquity, setStartingEquity] = useState(100000)
 
@@ -33,7 +32,6 @@ export function SetupWizard({ onComplete }: SetupWizardProps) {
         body: JSON.stringify({
           alpaca_key: alpacaKey,
           alpaca_secret: alpacaSecret,
-          openai_key: openaiKey || undefined,
           paper_mode: paperMode,
           starting_equity: startingEquity,
         }),
@@ -202,20 +200,14 @@ export function SetupWizard({ onComplete }: SetupWizardProps) {
             </div>
 
             <div>
-              <h3 className="hud-label mb-4 text-hud-primary">OpenAI API Key (Optional)</h3>
+              <h3 className="hud-label mb-4 text-hud-primary">LLM Provider</h3>
               <p className="text-xs text-hud-text-dim mb-4">
-                Required for AI-powered analysis. Get from{' '}
-                <a href="https://platform.openai.com/api-keys" target="_blank" rel="noopener noreferrer" className="text-hud-primary hover:underline">
-                  platform.openai.com
-                </a>
+                AI analysis runs on Google Gemini via Vertex AI. Configure
+                <code className="text-hud-primary"> GOOGLE_CLOUD_PROJECT</code>,
+                <code className="text-hud-primary"> GOOGLE_SERVICE_ACCOUNT_EMAIL</code>, and
+                <code className="text-hud-primary"> GOOGLE_SERVICE_ACCOUNT_PRIVATE_KEY</code>
+                on the server before enabling AI features.
               </p>
-              <input
-                type="password"
-                className="hud-input w-full"
-                placeholder="sk-..."
-                value={openaiKey}
-                onChange={e => setOpenaiKey(e.target.value)}
-              />
             </div>
 
             <div>

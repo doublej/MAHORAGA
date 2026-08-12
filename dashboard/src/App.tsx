@@ -529,7 +529,7 @@ export default function App() {
                   label="AVG COST/CALL" 
                   value={costs.calls > 0 ? `$${(costs.total_usd / costs.calls).toFixed(6)}` : '$0'} 
                 />
-                <MetricInline label="MODEL" value={config?.llm_model || 'gpt-4o-mini'} />
+                <MetricInline label="MODEL" value={config?.llm_model || 'gemini-2.5-flash'} />
               </div>
             </Panel>
           </div>

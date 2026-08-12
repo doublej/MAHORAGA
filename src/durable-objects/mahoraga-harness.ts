@@ -56,7 +56,7 @@ export class MahoragaHarness extends DurableObject<Env> {
 
     this._llm = createLLMProvider(env);
     if (this._llm) {
-      console.log(`[MahoragaHarness] LLM Provider initialized: ${env.LLM_PROVIDER || "openai-raw"}`);
+      console.log(`[MahoragaHarness] LLM Provider initialized: ${env.LLM_PROVIDER || "gemini-vertex"}`);
     } else {
       console.log("[MahoragaHarness] WARNING: No valid LLM provider configured - research disabled");
     }
@@ -80,8 +80,8 @@ export class MahoragaHarness extends DurableObject<Env> {
   }
 
   private initializeLLM() {
-    const provider = this.state.config.llm_provider || this.env.LLM_PROVIDER || "openai-raw";
-    const model = this.state.config.llm_model || this.env.LLM_MODEL || "gpt-4o-mini";
+    const provider = this.state.config.llm_provider || this.env.LLM_PROVIDER || "gemini-vertex";
+    const model = this.state.config.llm_model || this.env.LLM_MODEL || "gemini-2.5-flash";
 
     const effectiveEnv: Env = {
       ...this.env,
@@ -1293,10 +1293,13 @@ export class MahoragaHarness extends DurableObject<Env> {
 
   public trackLLMCost(model: string, tokensIn: number, tokensOut: number): number {
     const pricing: Record<string, { input: number; output: number }> = {
+      "gemini-2.5-flash": { input: 0.3, output: 2.5 },
+      "gemini-2.5-flash-lite": { input: 0.1, output: 0.4 },
+      "gemini-2.5-pro": { input: 1.25, output: 10 },
       "gpt-4o": { input: 2.5, output: 10 },
       "gpt-4o-mini": { input: 0.15, output: 0.6 },
     };
-    const rates = pricing[model] ?? pricing["gpt-4o"]!;
+    const rates = pricing[model] ?? pricing["gemini-2.5-flash"]!;
     const cost = (tokensIn * rates.input + tokensOut * rates.output) / 1_000_000;
 
     this.state.costTracker.total_usd += cost;

@@ -17,7 +17,11 @@ export interface Env {
   CLOUDFLARE_AI_GATEWAY_ACCOUNT_ID?: string;
   CLOUDFLARE_AI_GATEWAY_ID?: string;
   CLOUDFLARE_AI_GATEWAY_TOKEN?: string;
-  LLM_PROVIDER?: "openai-raw" | "ai-sdk" | "cloudflare-gateway";
+  GOOGLE_CLOUD_PROJECT?: string;
+  GOOGLE_CLOUD_LOCATION?: string;
+  GOOGLE_SERVICE_ACCOUNT_EMAIL?: string;
+  GOOGLE_SERVICE_ACCOUNT_PRIVATE_KEY?: string;
+  LLM_PROVIDER?: "openai-raw" | "ai-sdk" | "cloudflare-gateway" | "gemini-vertex";
   LLM_MODEL?: string;
   TWITTER_BEARER_TOKEN?: string;
   DISCORD_WEBHOOK_URL?: string;

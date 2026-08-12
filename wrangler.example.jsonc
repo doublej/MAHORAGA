@@ -25,10 +25,11 @@
 	// - KILL_SWITCH_SECRET (emergency kill switch + approval token signing)
 	// 
 	// LLM Provider (choose one mode):
-	// - LLM_PROVIDER ("openai-raw" | "ai-sdk" | "vercel-gateway", default: "openai-raw")
-	// - LLM_MODEL (model identifier, e.g. "gpt-4o-mini" or "anthropic/claude-sonnet-4")
+	// - LLM_PROVIDER ("openai-raw" | "ai-sdk" | "cloudflare-gateway" | "gemini-vertex", default: "openai-raw")
+	// - LLM_MODEL (model identifier, e.g. "gemini-2.5-flash" or "anthropic/claude-sonnet-4")
 	//
 	// Provider API Keys (based on LLM_PROVIDER mode):
+	// - GOOGLE_CLOUD_PROJECT + GOOGLE_CLOUD_LOCATION + GOOGLE_SERVICE_ACCOUNT_EMAIL + GOOGLE_SERVICE_ACCOUNT_PRIVATE_KEY (for gemini-vertex)
 	// - OPENAI_API_KEY (for openai-raw, or ai-sdk with OpenAI models)
 	// - OPENAI_BASE_URL (optional override for OpenAI-compatible proxy; affects openai-raw and ai-sdk OpenAI models)
 	// - ANTHROPIC_API_KEY (for ai-sdk with Anthropic models)

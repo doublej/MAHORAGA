@@ -222,8 +222,9 @@ export function SettingsModal({ config, onSave, onClose }: SettingsModalProps) {
                   <option value="openai-raw">OpenAI Direct (default)</option>
                   <option value="ai-sdk">AI SDK (5 providers)</option>
                   <option value="cloudflare-gateway">Cloudflare AI Gateway</option>
+                  <option value="gemini-vertex">Gemini (Vertex AI)</option>
                   {localConfig.llm_provider &&
-                    !['openai-raw', 'ai-sdk', 'cloudflare-gateway'].includes(localConfig.llm_provider) && (
+                    !['openai-raw', 'ai-sdk', 'cloudflare-gateway', 'gemini-vertex'].includes(localConfig.llm_provider) && (
                       <option value={localConfig.llm_provider}>Custom (backend configured)</option>
                     )}
                 </select>
@@ -234,6 +235,7 @@ export function SettingsModal({ config, onSave, onClose }: SettingsModalProps) {
                     !['openai-raw', 'ai-sdk', 'cloudflare-gateway'].includes(localConfig.llm_provider) &&
                     'Provider is configured in the backend; selection is hidden in the dashboard.'}
                   {localConfig.llm_provider === 'cloudflare-gateway' && 'Uses CLOUDFLARE_AI_GATEWAY_* env vars via Cloudflare AI Gateway /compat.'}
+                  {localConfig.llm_provider === 'gemini-vertex' && 'Uses GOOGLE_CLOUD_PROJECT + GOOGLE_SERVICE_ACCOUNT_* env vars via Vertex AI (billed to your GCP project).'}
                 </p>
               </div>
             </div>
@@ -286,8 +288,14 @@ export function SettingsModal({ config, onSave, onClose }: SettingsModalProps) {
                       </optgroup>
                     </>
                   )}
+                  {localConfig.llm_provider === 'gemini-vertex' && (
+                    <>
+                      <option value="gemini-2.5-flash">gemini-2.5-flash</option>
+                      <option value="gemini-2.5-flash-lite">gemini-2.5-flash-lite</option>
+                    </>
+                  )}
                   {localConfig.llm_provider &&
-                    !['openai-raw', 'ai-sdk', 'cloudflare-gateway'].includes(localConfig.llm_provider) && (
+                    !['openai-raw', 'ai-sdk', 'cloudflare-gateway', 'gemini-vertex'].includes(localConfig.llm_provider) && (
                       <option value={localConfig.llm_model}>{localConfig.llm_model}</option>
                     )}
                 </select>
@@ -353,8 +361,15 @@ export function SettingsModal({ config, onSave, onClose }: SettingsModalProps) {
                       </optgroup>
                     </>
                   )}
+                  {localConfig.llm_provider === 'gemini-vertex' && (
+                    <>
+                      <option value="gemini-2.5-pro">gemini-2.5-pro</option>
+                      <option value="gemini-2.5-flash">gemini-2.5-flash</option>
+                      <option value="gemini-2.5-flash-lite">gemini-2.5-flash-lite</option>
+                    </>
+                  )}
                   {localConfig.llm_provider &&
-                    !['openai-raw', 'ai-sdk', 'cloudflare-gateway'].includes(localConfig.llm_provider) && (
+                    !['openai-raw', 'ai-sdk', 'cloudflare-gateway', 'gemini-vertex'].includes(localConfig.llm_provider) && (
                       <option value={localConfig.llm_analyst_model || 'gpt-4o'}>
                         {localConfig.llm_analyst_model || 'gpt-4o'}
                       </option>

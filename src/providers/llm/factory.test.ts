@@ -364,6 +364,53 @@ describe("LLM Provider Factory", () => {
       });
     });
 
+    describe("gemini-vertex provider", () => {
+      it("creates Gemini provider with all credentials", async () => {
+        const fetchMock = vi.fn().mockResolvedValue({
+          ok: true,
+          json: async () => ({
+            candidates: [{ content: { parts: [{ text: "ok" }] }, finishReason: "STOP" }],
+            usageMetadata: { promptTokenCount: 1, candidatesTokenCount: 2, totalTokenCount: 3 },
+          }),
+        });
+        vi.stubGlobal("fetch", fetchMock);
+
+        const { createLLMProvider } = await import("./factory");
+        const env = {
+          GOOGLE_CLOUD_PROJECT: "project-123",
+          GOOGLE_CLOUD_LOCATION: "us-central1",
+          GOOGLE_SERVICE_ACCOUNT_EMAIL: "sa@project.iam.gserviceaccount.com",
+          GOOGLE_SERVICE_ACCOUNT_PRIVATE_KEY: "-----BEGIN PRIVATE KEY-----\nMIIE\n-----END PRIVATE KEY-----",
+          LLM_PROVIDER: "gemini-vertex",
+          LLM_MODEL: "gemini-2.5-flash",
+        } as unknown as Env;
+
+        const provider = createLLMProvider(env);
+        expect(provider).not.toBeNull();
+      });
+
+      it("returns null when credentials are missing", async () => {
+        const { createLLMProvider } = await import("./factory");
+        const env = {
+          LLM_PROVIDER: "gemini-vertex",
+        } as unknown as Env;
+
+        const provider = createLLMProvider(env);
+        expect(provider).toBeNull();
+      });
+
+      it("returns null when only project is set", async () => {
+        const { createLLMProvider } = await import("./factory");
+        const env = {
+          GOOGLE_CLOUD_PROJECT: "project-123",
+          LLM_PROVIDER: "gemini-vertex",
+        } as unknown as Env;
+
+        const provider = createLLMProvider(env);
+        expect(provider).toBeNull();
+      });
+    });
+
     describe("default provider", () => {
       it("defaults to openai-raw when LLM_PROVIDER not set", async () => {
         const fetchMock = vi.fn().mockResolvedValue({

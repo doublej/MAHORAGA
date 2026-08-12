@@ -2,9 +2,14 @@ import type { Env } from "../../env.d";
 import type { LLMProvider } from "../types";
 import { createAISDKProvider, SUPPORTED_PROVIDERS, type SupportedProvider } from "./ai-sdk";
 import { createCloudflareGatewayProvider } from "./cloudflare-gateway";
+import { createGeminiProvider } from "./gemini";
 import { createOpenAIProvider } from "./openai";
 
-export type LLMProviderType = "openai-raw" | "ai-sdk" | "cloudflare-gateway";
+export type LLMProviderType =
+  | "openai-raw"
+  | "ai-sdk"
+  | "cloudflare-gateway"
+  | "gemini-vertex";
 
 /**
  * Factory function to create LLM provider based on environment configuration.
@@ -13,6 +18,7 @@ export type LLMProviderType = "openai-raw" | "ai-sdk" | "cloudflare-gateway";
  * - "openai-raw": Direct OpenAI API calls (default, backward compatible)
  * - "ai-sdk": Vercel AI SDK with 5 providers (OpenAI, Anthropic, Google, xAI, DeepSeek)
  * - "cloudflare-gateway": Cloudflare AI Gateway (/compat) for unified access
+ * - "gemini-vertex": Google Gemini via Vertex AI (service account, bills to GCP project)
  *
  * @param env - Environment variables
  * @returns LLMProvider instance or null if no valid configuration
@@ -24,6 +30,27 @@ export function createLLMProvider(env: Env): LLMProvider | null {
   const openaiBaseUrl = openaiBaseUrlRaw ? openaiBaseUrlRaw : undefined;
 
   switch (providerType) {
+    case "gemini-vertex": {
+      const project = env.GOOGLE_CLOUD_PROJECT?.trim();
+      const serviceAccountEmail = env.GOOGLE_SERVICE_ACCOUNT_EMAIL?.trim();
+      const serviceAccountPrivateKey = env.GOOGLE_SERVICE_ACCOUNT_PRIVATE_KEY?.trim();
+
+      if (!(project && serviceAccountEmail && serviceAccountPrivateKey)) {
+        console.warn(
+          "LLM_PROVIDER=gemini-vertex requires GOOGLE_CLOUD_PROJECT, GOOGLE_SERVICE_ACCOUNT_EMAIL, and GOOGLE_SERVICE_ACCOUNT_PRIVATE_KEY"
+        );
+        return null;
+      }
+
+      return createGeminiProvider({
+        project,
+        location: env.GOOGLE_CLOUD_LOCATION?.trim() || undefined,
+        serviceAccountEmail,
+        serviceAccountPrivateKey,
+        model,
+      });
+    }
+
     case "cloudflare-gateway": {
       if (!env.CLOUDFLARE_AI_GATEWAY_ACCOUNT_ID || !env.CLOUDFLARE_AI_GATEWAY_ID || !env.CLOUDFLARE_AI_GATEWAY_TOKEN) {
         console.warn(
@@ -87,6 +114,12 @@ export function isLLMConfigured(env: Env): boolean {
   const providerType = (env.LLM_PROVIDER as LLMProviderType) ?? "openai-raw";
 
   switch (providerType) {
+    case "gemini-vertex":
+      return !!(
+        env.GOOGLE_CLOUD_PROJECT &&
+        env.GOOGLE_SERVICE_ACCOUNT_EMAIL &&
+        env.GOOGLE_SERVICE_ACCOUNT_PRIVATE_KEY
+      );
     case "cloudflare-gateway":
       return !!(
         env.CLOUDFLARE_AI_GATEWAY_ACCOUNT_ID &&
