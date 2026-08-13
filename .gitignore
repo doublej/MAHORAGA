@@ -91,3 +91,6 @@ coverage/
 *.tmp
 *.temp
 .aider*
+
+# onenv: env files archived during migration
+/.onenv-archive/
