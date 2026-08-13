@@ -306,6 +306,7 @@ export interface CompletionParams {
   temperature?: number;
   max_tokens?: number;
   response_format?: { type: "json_object" } | { type: "text" };
+  thinking?: boolean;
 }
 
 export interface CompletionResult {

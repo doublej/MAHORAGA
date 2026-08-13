@@ -580,6 +580,7 @@ export class MahoragaHarness extends DurableObject<Env> {
         max_tokens: prompt.maxTokens || 250,
         temperature: 0.3,
         response_format: { type: "json_object" },
+        thinking: false,
       });
 
       if (response.usage) {
@@ -656,6 +657,7 @@ export class MahoragaHarness extends DurableObject<Env> {
         max_tokens: prompt.maxTokens || 200,
         temperature: 0.3,
         response_format: { type: "json_object" },
+        thinking: false,
       });
 
       if (response.usage) {
@@ -716,6 +718,7 @@ export class MahoragaHarness extends DurableObject<Env> {
         max_tokens: prompt.maxTokens || 800,
         temperature: 0.4,
         response_format: { type: "json_object" },
+        thinking: false,
       });
 
       if (response.usage) {

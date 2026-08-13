@@ -32,6 +32,7 @@ interface GeminiGenerateRequest {
     temperature?: number;
     maxOutputTokens?: number;
     responseMimeType?: string;
+    thinkingConfig?: { thinkingBudget: number };
     [key: string]: unknown;
   };
   [key: string]: unknown;
@@ -153,6 +154,10 @@ function buildRequest(params: CompletionParams): GeminiGenerateRequest {
 
   if (params.response_format?.type === 'json_object') {
     request.generationConfig.responseMimeType = 'application/json';
+  }
+
+  if (params.thinking === false) {
+    request.generationConfig.thinkingConfig = { thinkingBudget: 0 };
   }
 
   return request;
