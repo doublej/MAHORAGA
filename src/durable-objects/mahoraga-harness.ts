@@ -44,6 +44,29 @@ import type { StrategyContext } from "../strategy/types";
 // DURABLE OBJECT CLASS
 // ============================================================================
 
+function extractJson<T>(content: string): T {
+  const cleaned = content.replace(/```json\n?|```/g, "").trim();
+  const firstBrace = cleaned.indexOf("{");
+  const lastBrace = cleaned.lastIndexOf("}");
+  const firstBracket = cleaned.indexOf("[");
+  const lastBracket = cleaned.lastIndexOf("]");
+
+  const objectCandidate =
+    firstBrace !== -1 && lastBrace > firstBrace ? cleaned.slice(firstBrace, lastBrace + 1) : null;
+  const arrayCandidate =
+    firstBracket !== -1 && lastBracket > firstBracket ? cleaned.slice(firstBracket, lastBracket + 1) : null;
+
+  const candidate = objectCandidate && arrayCandidate
+    ? (firstBrace < firstBracket ? objectCandidate : arrayCandidate)
+    : (objectCandidate ?? arrayCandidate);
+
+  if (!candidate) {
+    throw new Error(`No JSON found in LLM response: ${cleaned.slice(0, 120)}`);
+  }
+
+  return JSON.parse(candidate) as T;
+}
+
 export class MahoragaHarness extends DurableObject<Env> {
   private state: AgentState = { ...DEFAULT_STATE };
   private _llm: LLMProvider | null = null;
@@ -568,14 +591,14 @@ export class MahoragaHarness extends DurableObject<Env> {
       }
 
       const content = response.content || "{}";
-      const analysis = JSON.parse(content.replace(/```json\n?|```/g, "").trim()) as {
+      const analysis = extractJson<{
         verdict: "BUY" | "SKIP" | "WAIT";
         confidence: number;
         entry_quality: "excellent" | "good" | "fair" | "poor";
         reasoning: string;
         red_flags: string[];
         catalysts: string[];
-      };
+      }>(content);
 
       const result: ResearchResult = {
         symbol,
@@ -644,7 +667,12 @@ export class MahoragaHarness extends DurableObject<Env> {
       }
 
       const content = response.content || "{}";
-      const analysis = JSON.parse(content.replace(/```json\n?|```/g, "").trim());
+      const analysis = extractJson<{
+        recommendation: string;
+        risk_level: string;
+        reasoning: string;
+        key_factors: string[];
+      }>(content);
       this.state.positionResearch[position.symbol] = { ...analysis, timestamp: Date.now() };
       this.log("PositionResearch", "position_analyzed", {
         symbol: position.symbol,
@@ -699,7 +727,7 @@ export class MahoragaHarness extends DurableObject<Env> {
       }
 
       const content = response.content || "{}";
-      const analysis = JSON.parse(content.replace(/```json\n?|```/g, "").trim()) as {
+      const analysis = extractJson<{
         recommendations: Array<{
           action: "BUY" | "SELL" | "HOLD";
           symbol: string;
@@ -709,7 +737,7 @@ export class MahoragaHarness extends DurableObject<Env> {
         }>;
         market_summary: string;
         high_conviction_plays?: string[];
-      };
+      }>(content);
 
       this.log("Analyst", "analysis_complete", {
         recommendations: analysis.recommendations?.length || 0,
